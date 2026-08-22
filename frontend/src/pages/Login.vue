@@ -1,27 +1,7 @@
-﻿<template>
+<template>
   <div class="login-container">
     <!-- 背景装饰 -->
     <div class="bg-decoration">
-      <!-- 温馨背景图案 -->
-      <div class="bg-pattern"></div>
-      
-      <!-- 温馨漂浮元素 -->
-      <div class="floating-elements">
-        <!-- 左侧元素 -->
-        <div class="element cherry el-1">🌸</div>
-        <div class="element cloud el-2">☁️</div>
-        <div class="element butterfly el-3">🦋</div>
-        <div class="element cherry el-4">🌸</div>
-        <div class="element cloud el-5">☁️</div>
-        
-        <!-- 右侧元素 -->
-        <div class="element cloud el-6">☁️</div>
-        <div class="element butterfly el-7">🦋</div>
-        <div class="element cherry el-8">🌸</div>
-        <div class="element cloud el-9">☁️</div>
-        <div class="element cherry el-10">🌸</div>
-      </div>
-      
       <div class="floating-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
@@ -35,7 +15,7 @@
       <!-- 头部 -->
       <div class="login-header">
         <div class="logo">
-          <img class="logo-icon" src="@/assets/brand/logo.png" alt="情绪识别系统" />
+          <span class="logo-icon">🎭</span>
           <h1>情绪识别系统</h1>
         </div>
         <p class="subtitle">欢迎回来，请登录您的账户</p>
@@ -44,7 +24,7 @@
       <!-- 登录表单 -->
       <div class="login-form" v-if="!isRegisterMode">
         <el-form 
-          :model="loginForm" 
+          :model="loginForm"
           :rules="loginRules" 
           ref="loginFormRef"
           @submit.prevent="handleLogin"
@@ -232,11 +212,19 @@
           <el-link type="primary" @click="switchToLogin">返回登录</el-link>
         </div>
       </div>
+
+      <!-- 返回首页 -->
+      <div class="back-home">
+        <router-link to="/" class="back-home-link">
+          <el-icon><ArrowLeft /></el-icon>
+          返回首页
+        </router-link>
+      </div>
     </div>
 
     <!-- 底部信息 -->
     <div class="login-footer">
-      <p>&copy; 2026 情绪识别系统. All rights reserved.</p>
+      <p>&copy; 2025 情绪识别系统. All rights reserved.</p>
       <div class="footer-links">
         <el-link type="info" @click="showTerms">用户协议</el-link>
         <el-link type="info" @click="showPrivacy">隐私政策</el-link>
@@ -288,13 +276,14 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Message } from '@element-plus/icons-vue'
-import api from '../api/client'
+import { ChatDotRound, Message, ArrowLeft } from '@element-plus/icons-vue'
+import api from '@/api/client'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 // 表单模式
@@ -433,7 +422,7 @@ const handleLogin = async () => {
     
     if (result.success) {
       // 跳转到首页或重定向页面
-      const redirect = router.currentRoute.value.query.redirect || '/'
+      const redirect = router.currentRoute.value.query.redirect || '/app'
       router.push(redirect)
     }
     
@@ -511,14 +500,13 @@ const showHelp = () => {
 onMounted(() => {
   // 检查是否已登录
   if (userStore.isLoggedIn) {
-    router.push('/')
+    router.push('/app')
   }
   
   // 检查URL参数，看是否需要显示特定模式
-  const urlParams = new URLSearchParams(window.location.search)
-  if (urlParams.get('mode') === 'register') {
+  if (route.query.mode === 'register') {
     switchToRegister()
-  } else if (urlParams.get('mode') === 'forgot') {
+  } else if (route.query.mode === 'forgot') {
     forgotPassword()
   }
 })
@@ -531,7 +519,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #F5F2E9 0%, #FFF8F0 50%, #F5F2E9 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
   overflow: hidden;
   padding: 2rem;
@@ -548,291 +536,6 @@ onMounted(() => {
   z-index: 0;
 }
 
-/* 背景图案 */
-.bg-pattern {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(232, 220, 202, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(183, 28, 28, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(26, 36, 86, 0.08) 0%, transparent 50%);
-  background-size: 100% 100%;
-  animation: patternShift 20s ease-in-out infinite;
-}
-
-@keyframes patternShift {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-/* 漂浮的书页和墨水元素 */
-.floating-elements {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.element {
-  position: absolute;
-  opacity: 0.2;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1));
-  will-change: transform, opacity;
-}
-
-/* 羽毛 - 轻盈飘动 */
-.feather {
-  font-size: 1.8rem;
-  animation: floatGentle 12s ease-in-out infinite;
-}
-
-/* 樱花 - 旋转飘落 */
-.cherry {
-  font-size: 2rem;
-  animation: cherryFall 14s ease-in-out infinite;
-}
-
-/* 蒲公英 - 随风飘散 */
-.dandelion {
-  font-size: 1.6rem;
-  animation: dandelionFloat 16s ease-in-out infinite;
-}
-
-/* 叶子 - 摇摆飘落 */
-.leaf {
-  font-size: 1.7rem;
-  animation: leafSway 13s ease-in-out infinite;
-}
-
-/* 花朵 - 轻轻摇曳 */
-.flower {
-  font-size: 1.9rem;
-  animation: flowerSway 11s ease-in-out infinite;
-}
-
-/* 蝴蝶 - 飞舞 */
-.butterfly {
-  font-size: 1.8rem;
-  animation: butterflyFly 10s ease-in-out infinite;
-}
-
-/* 花瓣 */
-.petal {
-  font-size: 1.5rem;
-  animation: petalFloat 15s ease-in-out infinite;
-}
-
-/* 闪光 */
-.sparkle {
-  font-size: 1.2rem;
-  animation: sparkleShine 8s ease-in-out infinite;
-}
-
-/* 心形花 */
-.heart {
-  font-size: 1.6rem;
-  animation: heartPulse 12s ease-in-out infinite;
-}
-
-/* 白云 - 缓慢飘动 */
-.cloud {
-  font-size: 2rem;
-  animation: cloudDrift 18s ease-in-out infinite;
-}
-
-/* 随机位置和延迟 - 左右两侧对称分布，基于斐波那契数列和黄金分割 */
-/* 左侧元素（5个） */
-.el-1 { top: 15%; left: 10%; animation-delay: 0s; }
-.el-2 { top: 35%; left: 18%; animation-delay: 2s; }
-.el-3 { top: 50%; left: 12%; animation-delay: 4s; }
-.el-4 { top: 70%; left: 20%; animation-delay: 1s; }
-.el-5 { top: 88%; left: 15%; animation-delay: 3s; }
-
-/* 右侧元素（5个） */
-.el-6 { top: 15%; right: 10%; animation-delay: 1s; }
-.el-7 { top: 35%; right: 18%; animation-delay: 3s; }
-.el-8 { top: 50%; right: 12%; animation-delay: 5s; }
-.el-9 { top: 70%; right: 20%; animation-delay: 2s; }
-.el-10 { top: 88%; right: 15%; animation-delay: 4s; }
-
-/* 轻柔漂浮 */
-@keyframes floatGentle {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 0.2;
-  }
-  25% {
-    transform: translate(8px, -12px) rotate(5deg);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translate(-6px, -8px) rotate(-3deg);
-    opacity: 0.25;
-  }
-  75% {
-    transform: translate(10px, -15px) rotate(8deg);
-    opacity: 0.28;
-  }
-}
-
-/* 樱花飘落 */
-@keyframes cherryFall {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 0.25;
-  }
-  25% {
-    transform: translate(-12px, 8px) rotate(90deg);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translate(8px, 15px) rotate(180deg);
-    opacity: 0.28;
-  }
-  75% {
-    transform: translate(-8px, 22px) rotate(270deg);
-    opacity: 0.22;
-  }
-}
-
-/* 蒲公英飘散 */
-@keyframes dandelionFloat {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.2;
-  }
-  33% {
-    transform: translate(15px, -18px) scale(0.95);
-    opacity: 0.28;
-  }
-  66% {
-    transform: translate(-12px, -10px) scale(1.05);
-    opacity: 0.24;
-  }
-}
-
-/* 叶子摇摆 */
-@keyframes leafSway {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 0.22;
-  }
-  25% {
-    transform: translate(10px, 8px) rotate(12deg);
-    opacity: 0.28;
-  }
-  50% {
-    transform: translate(-8px, 15px) rotate(-8deg);
-    opacity: 0.25;
-  }
-  75% {
-    transform: translate(6px, 20px) rotate(6deg);
-    opacity: 0.24;
-  }
-}
-
-/* 花朵摇曳 */
-@keyframes flowerSway {
-  0%, 100% {
-    transform: translate(0, 0) rotate(-3deg);
-    opacity: 0.25;
-  }
-  50% {
-    transform: translate(5px, -20px) rotate(3deg);
-    opacity: 0.3;
-  }
-}
-
-/* 蝴蝶飞舞 */
-@keyframes butterflyFly {
-  0%, 100% {
-    transform: translate(0, 0);
-    opacity: 0.3;
-  }
-  20% {
-    transform: translate(15px, -10px);
-    opacity: 0.35;
-  }
-  40% {
-    transform: translate(20px, -5px);
-    opacity: 0.28;
-  }
-  60% {
-    transform: translate(18px, -12px);
-    opacity: 0.32;
-  }
-  80% {
-    transform: translate(8px, -8px);
-    opacity: 0.3;
-  }
-}
-
-/* 花瓣飘浮 */
-@keyframes petalFloat {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 0.18;
-  }
-  50% {
-    transform: translate(-10px, -12px) rotate(180deg);
-    opacity: 0.25;
-  }
-}
-
-/* 闪光闪烁 */
-@keyframes sparkleShine {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.4;
-  }
-}
-
-/* 心跳脉动 */
-@keyframes heartPulse {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.2;
-  }
-  50% {
-    transform: scale(1.1) rotate(5deg);
-    opacity: 0.3;
-  }
-}
-
-/* 白云飘动 */
-@keyframes cloudDrift {
-  0%, 100% {
-    transform: translate(0, 0);
-    opacity: 0.25;
-  }
-  25% {
-    transform: translate(-15px, -8px);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translate(-22px, -5px);
-    opacity: 0.28;
-  }
-  75% {
-    transform: translate(-10px, -12px);
-    opacity: 0.26;
-  }
-}
-
 .floating-shapes {
   position: relative;
   width: 100%;
@@ -842,40 +545,40 @@ onMounted(() => {
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: rgba(26, 36, 86, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   animation: float 6s ease-in-out infinite;
 }
 
 .shape-1 {
-  width: 89px;
-  height: 89px;
-  top: 23.6%;
-  left: 8%;
+  width: 80px;
+  height: 80px;
+  top: 20%;
+  left: 10%;
   animation-delay: 0s;
 }
 
 .shape-2 {
-  width: 55px;
-  height: 55px;
-  top: 61.8%;
-  left: 15%;
+  width: 120px;
+  height: 120px;
+  top: 60%;
+  right: 15%;
   animation-delay: 2s;
 }
 
 .shape-3 {
-  width: 89px;
-  height: 89px;
-  top: 23.6%;
-  right: 8%;
-  animation-delay: 1s;
+  width: 60px;
+  height: 60px;
+  bottom: 30%;
+  left: 20%;
+  animation-delay: 4s;
 }
 
 .shape-4 {
-  width: 55px;
-  height: 55px;
-  top: 61.8%;
-  right: 15%;
-  animation-delay: 3s;
+  width: 100px;
+  height: 100px;
+  top: 10%;
+  right: 30%;
+  animation-delay: 1s;
 }
 
 @keyframes float {
@@ -889,22 +592,21 @@ onMounted(() => {
 
 /* 登录卡片 */
 .login-card {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   padding: 3rem;
   width: 100%;
   max-width: 450px;
   position: relative;
   z-index: 1;
   transition: all 0.3s ease;
-  border: 1px solid #E8DCCA;
 }
 
 .login-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
 /* 头部 */
@@ -922,24 +624,18 @@ onMounted(() => {
 }
 
 .logo-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  object-fit: cover;
-  display: block;
-  flex-shrink: 0;
+  font-size: 3rem;
 }
 
 .logo h1 {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #1A2456;
+  color: #303133;
   margin: 0;
-  font-family: 'Playfair Display', serif;
 }
 
 .subtitle {
-  color: rgba(26, 36, 86, 0.7);
+  color: #606266;
   font-size: 1rem;
   margin: 0;
 }
@@ -975,15 +671,15 @@ onMounted(() => {
 .login-form .el-input__wrapper:hover,
 .register-form .el-input__wrapper:hover,
 .forgot-form .el-input__wrapper:hover {
-  border-color: #1A2456;
-  box-shadow: 0 4px 12px rgba(26, 36, 86, 0.15);
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .login-form .el-input__wrapper.is-focus,
 .register-form .el-input__wrapper.is-focus,
 .forgot-form .el-input__wrapper.is-focus {
-  border-color: #1A2456;
-  box-shadow: 0 0 0 2px rgba(26, 36, 86, 0.2);
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 /* 表单选项 */
@@ -1003,7 +699,7 @@ onMounted(() => {
   border-radius: 12px;
   font-size: 1.1rem;
   font-weight: 600;
-  background: #1A2456;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   transition: all 0.3s ease;
 }
@@ -1077,6 +773,28 @@ onMounted(() => {
 .back-to-login {
   text-align: center;
   margin-top: 1.5rem;
+}
+
+/* 返回首页 */
+.back-home {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.back-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #667eea;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.back-home-link:hover {
+  color: #764ba2;
 }
 
 /* 底部信息 */

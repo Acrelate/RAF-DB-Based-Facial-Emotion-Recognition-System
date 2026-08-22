@@ -24,7 +24,6 @@ def main():
     logger.info("🚀 正在启动人脸情绪识别服务...")
     warmup_models()
     logger.info(f"🌐 服务启动在 http://{HOST}:{PORT}")
-    # 生产环境请关闭 debug 并使用 WSGI 容器部署
     app.run(host=HOST, port=PORT, debug=False)
 
 

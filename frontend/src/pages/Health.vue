@@ -1,9 +1,19 @@
-﻿<template>
+<template>
   <div class="health-view">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>💚 心理健康中心</h1>
-      <p>基于您的情绪状态，提供个性化的心理健康建议和放松技巧</p>
+      <div class="header-heart-icon">
+        <span class="heart-glow"></span>
+        <span class="heart-symbol">💜</span>
+      </div>
+      <div class="header-text">
+        <h1>心理健康中心</h1>
+        <p>基于您的情绪状态，提供个性化的心理健康建议和放松技巧</p>
+      </div>
+      <div class="header-decoration" aria-hidden="true">
+        <span class="deco-leaf">🌿</span>
+        <span class="deco-heart">💜</span>
+      </div>
     </div>
 
     <!-- 空状态提示 -->
@@ -15,7 +25,7 @@
         <p style="color: #909399; margin-bottom: 1rem;">
           请先在首页上传照片进行情绪识别，系统会为您提供个性化的心理健康建议
         </p>
-        <el-button type="primary" @click="$router.push('/')">
+        <el-button type="primary" @click="$router.push('/app')">
           前往首页识别
         </el-button>
       </el-empty>
@@ -36,117 +46,142 @@
     </el-card>
 
     <!-- 当前情绪状态卡片 -->
-    <el-card class="emotion-status-card" shadow="hover" v-else>
-      <template #header>
-        <div class="card-header">
-          <span>😊 当前情绪状态</span>
-          <el-tag :type="getEmotionTagType(latestEmotion.emotion)">
-            {{ latestEmotion.emotion_cn }}
-          </el-tag>
+    <div class="emotion-status-panel" v-else>
+      <div class="status-panel-header">
+        <div class="status-title-group">
+          <span class="status-title-icon">🤯</span>
+          <span class="status-title">当前情绪状态</span>
+          <span class="status-tag">主导情绪</span>
         </div>
-      </template>
+      </div>
+      <div class="status-divider"></div>
       <div class="emotion-status-content">
         <div class="emotion-display">
-          <div class="emotion-emoji">{{ getEmotionEmoji(latestEmotion.emotion) }}</div>
+          <div class="emotion-emoji-wrap">
+            <div class="emotion-emoji">{{ getEmotionEmoji(latestEmotion.emotion) }}</div>
+          </div>
           <div class="emotion-details">
             <h3>{{ latestEmotion.emotion_cn }}</h3>
-            <el-progress
-              :percentage="Math.round(latestEmotion.confidence * 100)"
-              :color="getProgressColor(latestEmotion.confidence)"
-            />
-            <p class="emotion-time">检测时间: {{ formatTime(latestEmotion.timestamp) }}</p>
+            <div class="confidence-bar-row">
+              <div class="confidence-bar-track">
+                <div
+                  class="confidence-bar-fill"
+                  :style="{
+                    width: `${Math.round(latestEmotion.confidence * 100)}%`,
+                    background: getConfidenceBarGradient(latestEmotion.emotion)
+                  }"
+                ></div>
+              </div>
+              <span class="confidence-percent">{{ Math.round(latestEmotion.confidence * 100) }}%</span>
+            </div>
+            <p class="emotion-time">检测时间：{{ formatDetectionTime(latestEmotion.timestamp) }}</p>
           </div>
         </div>
-        <el-button type="primary" @click="getNewAdvice">
-          获取新建议
-        </el-button>
+        <div class="status-actions">
+          <button class="btn-history" type="button" @click="$router.push('/app/history')">
+            查看历史记录 &gt;
+          </button>
+          <button class="btn-new-advice" type="button" @click="getNewAdvice">
+            获取新建议
+          </button>
+        </div>
       </div>
-    </el-card>
+    </div>
 
     <!-- 个性化建议 -->
     <el-row :gutter="20" class="advice-section">
       <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="advice-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <el-icon color="#67c23a"><info-filled /></el-icon>
-              <span>💡 即时建议</span>
-            </div>
-          </template>
-          <div class="advice-content">
-            <h4>{{ currentAdvice.title }}</h4>
-            <p>{{ currentAdvice.description }}</p>
-            <el-divider />
-            <h5>立即行动:</h5>
-            <ul>
+        <div class="instant-advice-panel">
+          <div class="instant-advice-header">
+            <span class="instant-header-title">即时建议</span>
+          </div>
+          <div class="instant-advice-intro">
+            <h4 class="instant-advice-title">{{ currentAdvice.title }}</h4>
+            <p class="instant-advice-desc">{{ currentAdvice.description }}</p>
+          </div>
+          <div class="instant-action-section">
+            <p class="instant-action-label">立即行动</p>
+            <ul class="instant-action-list">
               <li v-for="(action, index) in currentAdvice.actions" :key="index">
-                {{ action }}
+                <span class="instant-action-icon">
+                  <el-icon :size="18"><component :is="getActionIcon(index, action)" /></el-icon>
+                </span>
+                <span class="instant-action-text">{{ action }}</span>
               </li>
             </ul>
           </div>
-        </el-card>
+        </div>
       </el-col>
 
       <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="advice-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <el-icon color="#409eff"><medal /></el-icon>
-              <span>🧘 放松技巧</span>
-            </div>
-          </template>
-          <div class="advice-content">
-            <h4>{{ relaxationTechnique.title }}</h4>
-            <p>{{ relaxationTechnique.description }}</p>
-            <el-divider />
-            <div class="technique-steps">
-              <el-steps direction="vertical" :active="activeStep" finish-status="success">
-                <el-step
-                  v-for="(step, index) in relaxationTechnique.steps"
-                  :key="index"
-                  :title="step"
-                />
-              </el-steps>
-              <el-button-group class="step-controls">
-                <el-button size="small" @click="prevStep" :disabled="activeStep === 0">
-                  上一步
-                </el-button>
-                <el-button size="small" type="primary" @click="nextStep">
-                  {{ activeStep >= relaxationTechnique.steps.length ? '完成' : '下一步' }}
-                </el-button>
-              </el-button-group>
-            </div>
+        <div id="relaxation-card" class="relaxation-panel">
+          <div class="relaxation-header">
+            <span class="relax-header-title">放松技巧</span>
           </div>
-        </el-card>
-      </el-col>
-
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="advice-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <el-icon color="#e6a23c"><reading /></el-icon>
-              <span>📚 推荐资源</span>
-            </div>
-          </template>
-          <div class="advice-content">
-            <div class="resource-list">
-              <div
-                v-for="(resource, index) in recommendedResources"
+          <div class="relaxation-intro">
+            <h4 class="relaxation-title">{{ relaxationTechnique.title }}</h4>
+            <p class="relaxation-meta">{{ relaxationMeta }}</p>
+            <p class="relaxation-desc">{{ relaxationTechnique.description }}</p>
+          </div>
+          <div
+            class="relaxation-steps-section"
+            role="button"
+            tabindex="0"
+            @click="startRelaxationPractice"
+            @keydown.enter="startRelaxationPractice"
+          >
+            <p class="relaxation-steps-label">练习步骤</p>
+            <ul class="relaxation-steps">
+              <li
+                v-for="(step, index) in relaxationTechnique.steps"
                 :key="index"
-                class="resource-item"
+                class="relaxation-step"
               >
-                <div class="resource-icon">{{ resource.icon }}</div>
-                <div class="resource-info">
-                  <h5>{{ resource.title }}</h5>
-                  <p>{{ resource.description }}</p>
-                  <el-link :href="resource.link" target="_blank" type="primary">
-                    了解更多 →
-                  </el-link>
-                </div>
-              </div>
-            </div>
+                <span class="relax-step-badge">{{ index + 1 }}</span>
+                <span class="relax-step-text">{{ step }}</span>
+              </li>
+            </ul>
+            <p class="panel-hint-link">前往工具箱开始练习 →</p>
           </div>
-        </el-card>
+        </div>
+      </el-col>
+
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <div class="resource-panel">
+          <div class="resource-panel-header">
+            <span class="resource-header-title">推荐资源</span>
+          </div>
+          <div class="resource-panel-intro">
+            <h4 class="resource-intro-title">适合你当前状态的内容</h4>
+            <p class="resource-intro-meta">{{ recommendedResources.length }} 个精选资源</p>
+          </div>
+          <div class="resource-list-section">
+            <a
+              v-for="(resource, index) in recommendedResources"
+              :key="index"
+              class="resource-item"
+              :href="resource.link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="resource-item-icon">{{ resource.icon }}</span>
+              <div class="resource-item-info">
+                <h5 class="resource-item-title">{{ resource.title }}</h5>
+                <p class="resource-item-desc">{{ resource.description }}</p>
+              </div>
+              <span class="resource-item-arrow">&gt;</span>
+            </a>
+            <p
+              class="panel-hint-link"
+              role="button"
+              tabindex="0"
+              @click="viewAllResources"
+              @keydown.enter="viewAllResources"
+            >
+              查看全部资源 →
+            </p>
+          </div>
+        </div>
       </el-col>
     </el-row>
 
@@ -733,7 +768,24 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useEmotionStore } from '../stores/emotion'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { InfoFilled, Medal, Reading, WarningFilled, Refresh, ArrowDown, ArrowUp, Document, VideoCamera } from '@element-plus/icons-vue'
+import {
+  Reading,
+  WarningFilled,
+  Refresh,
+  ArrowDown,
+  ArrowUp,
+  Document,
+  VideoCamera,
+  Location,
+  WindPower,
+  Coffee,
+  EditPen,
+  View,
+  Bicycle,
+  ChatLineRound,
+  Aim,
+  Timer
+} from '@element-plus/icons-vue'
 import { 
   emotionAdviceLibrary, 
   getRandomAdvice,
@@ -986,6 +1038,46 @@ function formatTime(timestamp) {
   return date.toLocaleString('zh-CN')
 }
 
+function formatDetectionTime(timestamp) {
+  const date = new Date(timestamp)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const s = String(date.getSeconds()).padStart(2, '0')
+  return `${y}/${m}/${d} ${h}:${min}:${s}`
+}
+
+function getConfidenceBarGradient(emotion) {
+  const gradients = {
+    anger: 'linear-gradient(90deg, #fb923c, #ef4444)',
+    disgust: 'linear-gradient(90deg, #a78bfa, #7c3aed)',
+    fear: 'linear-gradient(90deg, #fbbf24, #f97316)',
+    happy: 'linear-gradient(90deg, #4ade80, #22c55e)',
+    normal: 'linear-gradient(90deg, #93c5fd, #6366f1)',
+    sad: 'linear-gradient(90deg, #60a5fa, #3b82f6)',
+    surprised: 'linear-gradient(90deg, #f472b6, #ec4899)'
+  }
+  return gradients[emotion] || 'linear-gradient(90deg, #fb923c, #ef4444)'
+}
+
+const defaultActionIcons = [Location, WindPower, Coffee, EditPen, Aim, ChatLineRound, Bicycle, Timer]
+
+function getActionIcon(index, action) {
+  const text = action || ''
+  if (/呼吸|深/.test(text)) return WindPower
+  if (/安静|地方|离开|环境/.test(text)) return Location
+  if (/水|喝|杯/.test(text)) return Coffee
+  if (/写|记录|日记|感受/.test(text)) return EditPen
+  if (/运动|锻炼|发泄|跑步/.test(text)) return Bicycle
+  if (/思考|角度|对方|换位/.test(text)) return View
+  if (/沟通|倾诉|朋友|聊/.test(text)) return ChatLineRound
+  if (/目标|计划|边界|技巧/.test(text)) return Aim
+  if (/冷静|等待|后再|时间/.test(text)) return Timer
+  return defaultActionIcons[index % defaultActionIcons.length]
+}
+
 // 建议内容
 const adviceDatabase = {
   happy: {
@@ -1153,20 +1245,17 @@ const relaxationTechniques = {
 }
 
 const relaxationTechnique = ref(relaxationTechniques.normal)
-const activeStep = ref(0)
 
-function nextStep() {
-  if (activeStep.value < relaxationTechnique.value.steps.length) {
-    activeStep.value++
-  } else {
-    ElMessage.success('完成练习！')
-    activeStep.value = 0
-  }
-}
+const relaxationMeta = computed(() => {
+  const count = relaxationTechnique.value.steps?.length || 0
+  const minutes = Math.max(3, Math.ceil(count * 1.25))
+  return `${minutes} 分钟 · ${count} 个步骤`
+})
 
-function prevStep() {
-  if (activeStep.value > 0) {
-    activeStep.value--
+function startRelaxationPractice() {
+  const toolbox = document.querySelector('.toolbox-card')
+  if (toolbox) {
+    toolbox.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
@@ -1214,21 +1303,21 @@ const resourcesDatabase = {
   ],
   anger: [
     {
-      icon: '📖',
-      title: '《愤怒管理》',
-      description: '了解和控制愤怒情绪',
-      link: 'https://www.amazon.cn/dp/B00M9Y145S'
+      icon: '🧘',
+      title: '情绪调节计划',
+      description: '建立日常情绪管理习惯',
+      link: 'https://www.mindful.org/meditation/mindfulness-getting-started/'
     },
     {
-      icon: '🥊',
-      title: '运动减压计划',
-      description: '通过运动释放情绪',
-      link: 'https://www.keep.com/course/5bf13a1d1ce1b41ce53ad12c'
+      icon: '📖',
+      title: '愤怒管理指南',
+      description: '了解愤怒来源与控制方法',
+      link: 'https://www.amazon.cn/dp/B00M9Y145S'
     },
     {
       icon: '🎯',
       title: '冲突解决技巧',
-      description: '学习有效沟通和解决问题',
+      description: '学习有效沟通与解决问题',
       link: 'https://www.coursera.org/learn/conflict-resolution'
     }
   ],
@@ -1315,6 +1404,13 @@ const resourcesDatabase = {
 }
 
 const recommendedResources = ref(resourcesDatabase.normal)
+
+function viewAllResources() {
+  const target = document.querySelector('.courses-card') || document.querySelector('.resources-card')
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 // 情绪教育相关
 const activeEducationSections = ref([])
@@ -1615,7 +1711,6 @@ function getNewAdvice() {
     const resources = resourcesDatabase[emotion] || resourcesDatabase.normal
     recommendedResources.value = [...resources].sort(() => Math.random() - 0.5)
     
-    activeStep.value = 0
     activeEducationSections.value = []  // 重置教育板块
     ElMessage.success('已获取新建议')
   } else {
@@ -2067,62 +2162,618 @@ onMounted(() => {
 }
 
 .page-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(124, 77, 255, 0.08);
+  border: 1px solid rgba(241, 245, 249, 0.9);
+  position: relative;
+  overflow: hidden;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  color: #303133;
-  margin-bottom: 0.5rem;
+.header-heart-icon {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.page-header p {
-  color: #606266;
+.heart-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, rgba(237, 233, 254, 0.2) 70%, transparent 100%);
+}
+
+.heart-symbol {
+  font-size: 1.75rem;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 6px rgba(124, 77, 255, 0.25));
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-text h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.35rem;
+}
+
+.header-text p {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.header-decoration {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.deco-leaf {
+  font-size: 3.5rem;
+  position: absolute;
+  right: 0;
+  bottom: -1.5rem;
+  transform: rotate(-20deg);
+}
+
+.deco-heart {
+  font-size: 1.25rem;
+  position: absolute;
+  right: 2.5rem;
+  top: -0.75rem;
+}
+
+.emotion-status-panel {
+  margin-bottom: 1.25rem;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
+  overflow: hidden;
+}
+
+.status-panel-header {
+  padding: 1.1rem 1.35rem 0.85rem;
+}
+
+.status-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-title-icon {
   font-size: 1.1rem;
 }
 
-.emotion-status-card {
-  margin-bottom: 2rem;
+.status-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.status-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+}
+
+.status-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0 1.35rem;
 }
 
 .emotion-status-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.35rem 1.35rem;
 }
 
 .emotion-display {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.emotion-emoji-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fff7ed, #fef2f2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
 }
 
 .emotion-emoji {
-  font-size: 5rem;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.emotion-details {
+  flex: 1;
+  min-width: 0;
 }
 
 .emotion-details h3 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.65rem;
+}
+
+.confidence-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+}
+
+.confidence-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #fce7f3;
+  border-radius: 999px;
+  overflow: hidden;
+  max-width: 280px;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.confidence-percent {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ef4444;
+  flex-shrink: 0;
 }
 
 .emotion-time {
-  color: #909399;
-  margin-top: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.btn-history {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+  background: #fff;
+  color: #7c3aed;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-history:hover {
+  background: #f5f3ff;
+  border-color: #a78bfa;
+}
+
+.btn-new-advice {
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6366f1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-new-advice:hover {
+  color: #7c3aed;
+  text-decoration: underline;
+}
+
+.emotion-status-card {
+  margin-bottom: 2rem;
 }
 
 .advice-section {
   margin-bottom: 2rem;
 }
 
+/* 即时建议卡片 */
+.instant-advice-panel {
+  height: 100%;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.instant-advice-header {
+  padding: 1.2rem 1.35rem 0.5rem;
+}
+
+.instant-header-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.instant-advice-intro {
+  padding: 0 1.35rem 1rem;
+}
+
+.instant-advice-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.55rem;
+  line-height: 1.4;
+}
+
+.instant-advice-desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.instant-action-section {
+  flex: 1;
+  margin: 0 1.35rem 1.35rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(160deg, #faf5ff 0%, #f5f3ff 100%);
+  border-radius: 14px;
+  border: 1px solid #ede9fe;
+}
+
+.instant-action-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.85rem;
+}
+
+.instant-action-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.instant-action-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 4px rgba(124, 77, 255, 0.04);
+}
+
+.instant-action-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.instant-action-text {
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+/* 放松技巧卡片 */
+.relaxation-panel {
+  height: 100%;
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.relaxation-header {
+  padding: 1.2rem 1.35rem 0.5rem;
+}
+
+.relax-header-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.relaxation-intro {
+  padding: 0 1.35rem 1rem;
+}
+
+.relaxation-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.55rem;
+  line-height: 1.4;
+}
+
+.relaxation-meta {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6b9080;
+  margin: 0 0 0.55rem;
+}
+
+.relaxation-desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.relaxation-steps-section {
+  flex: 1;
+  margin: 0 1.35rem 1.35rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(160deg, #f8faf9 0%, #f3f6f4 100%);
+  border-radius: 14px;
+  border: 1px solid #e8ede9;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.relaxation-steps-section:hover {
+  border-color: #d1ddd6;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.relaxation-steps-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.85rem;
+}
+
+.relaxation-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.relaxation-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.relax-step-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #7cb899;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.relax-step-text {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #334155;
+  font-weight: 500;
+}
+
+.panel-hint-link {
+  margin: 0.85rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e8ede9;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.panel-hint-link:hover {
+  color: #6b9080;
+}
+
+/* 推荐资源卡片 */
 .advice-card {
   height: 100%;
   margin-bottom: 1rem;
+}
+
+.resource-panel {
+  height: 100%;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resource-panel-header {
+  padding: 1.2rem 1.35rem 0.5rem;
+}
+
+.resource-header-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.resource-panel-intro {
+  padding: 0 1.35rem 1rem;
+}
+
+.resource-intro-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.4rem;
+  line-height: 1.4;
+}
+
+.resource-intro-meta {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.resource-list-section {
+  flex: 1;
+  margin: 0 1.35rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.resource-item:hover {
+  border-color: #dbeafe;
+  background: #fafbfd;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(91, 141, 239, 0.08);
+}
+
+.resource-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.resource-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-item-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.2rem;
+  line-height: 1.4;
+}
+
+.resource-item-desc {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.resource-item-arrow {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.resource-item:hover .resource-item-arrow {
+  color: #5b8def;
+}
+
+.resource-list-section .panel-hint-link {
+  border-top: none;
+  padding-top: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.resource-list-section .panel-hint-link:hover {
+  color: #5b8def;
 }
 
 .more-advice-card {
@@ -2196,41 +2847,6 @@ onMounted(() => {
   margin-top: 1rem;
   display: flex;
   justify-content: center;
-}
-
-.resource-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.resource-item {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f5f7fa;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
-
-.resource-item:hover {
-  background: #e8eaed;
-  transform: translateX(4px);
-}
-
-.resource-icon {
-  font-size: 2rem;
-}
-
-.resource-info h5 {
-  color: #303133;
-  margin-bottom: 0.5rem;
-}
-
-.resource-info p {
-  color: #606266;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
 }
 
 .toolbox-card {
@@ -2681,18 +3297,39 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .page-header h1 {
-    font-size: 1.8rem;
+  .page-header {
+    flex-wrap: wrap;
+    padding-right: 1.25rem;
   }
-  
+
+  .header-decoration {
+    display: none;
+  }
+
+  .header-text h1 {
+    font-size: 1.15rem;
+  }
+
   .emotion-status-content {
     flex-direction: column;
-    gap: 1.5rem;
+    align-items: stretch;
+    gap: 1.25rem;
   }
-  
+
+  .status-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
   .emotion-display {
-    flex-direction: column;
-    text-align: center;
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .confidence-bar-track {
+    max-width: none;
   }
   
   .breathing-circle {

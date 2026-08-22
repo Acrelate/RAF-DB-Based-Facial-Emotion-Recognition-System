@@ -7,15 +7,10 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useEmotionStore } from './stores/emotion'
-import { useUserStore } from './stores/user'
 
 const emotionStore = useEmotionStore()
-const userStore = useUserStore()
 
 onMounted(() => {
-  // 初始化用户状态
-  userStore.initializeUser()
-  
   // 初始化主题设置
   const userSettings = JSON.parse(localStorage.getItem('userSettings') || '{}')
   const savedTheme = localStorage.getItem('theme')
@@ -44,15 +39,13 @@ onMounted(() => {
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #F5F2E9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 40%, #f0f4ff 100%);
   min-height: 100vh;
-  color: #1A2456;
 }
 
 #app {
   min-height: 100vh;
-  background: #F5F2E9;
 }
 
 /* 调整 Element Plus 消息提示位置，避免遮挡导航栏和按钮 */
@@ -68,19 +61,19 @@ body {
 
 /* 全局深色模式样式 */
 .dark body {
-  background: #1A2456;
-  color: #F5F2E9;
+  background: #1a1a1a;
+  color: #e0e0e0;
 }
 
 .dark #app {
-  background: #1A2456;
+  background: #1a1a1a;
 }
 
 /* Element Plus 全局深色模式样式 */
 .dark .el-card {
-  background-color: #243566;
-  border-color: #5D4037;
-  color: #F5F2E9;
+  background-color: #2c2c2c;
+  border-color: #404040;
+  color: #e0e0e0;
 }
 
 .dark .el-card__header {
@@ -183,58 +176,13 @@ body {
 }
 
 .dark .el-button--primary {
-  background-color: #B71C1C;
-  border-color: #B71C1C;
+  background-color: #667eea;
+  border-color: #667eea;
 }
 
 .dark .el-button--primary:hover {
-  background-color: #8B0000;
-  border-color: #8B0000;
-}
-
-/* 全局卡片样式 */
-.el-card {
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  transition: all 0.3s ease;
-  border: 1px solid #E8DCCA;
-}
-
-.el-card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
-}
-
-/* 全局按钮样式 */
-.el-button--primary {
-  background-color: #1A2456;
-  border-color: #1A2456;
-  transition: all 0.3s ease;
-}
-
-.el-button--primary:hover {
-  background-color: rgba(26, 36, 86, 0.9);
-  border-color: rgba(26, 36, 86, 0.9);
-}
-
-.el-button--success {
-  background-color: #5D4037;
-  border-color: #5D4037;
-}
-
-.el-button--success:hover {
-  background-color: rgba(93, 64, 55, 0.9);
-  border-color: rgba(93, 64, 55, 0.9);
-}
-
-.el-button--danger {
-  background-color: #B71C1C;
-  border-color: #B71C1C;
-}
-
-.el-button--danger:hover {
-  background-color: rgba(183, 28, 28, 0.9);
-  border-color: rgba(183, 28, 28, 0.9);
+  background-color: #5a67d8;
+  border-color: #5a67d8;
 }
 
 .dark .el-form-item__label {

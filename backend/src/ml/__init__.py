@@ -1,1 +1,1 @@
-"""ML / preprocessing helpers."""
+"""Machine learning utilities."""

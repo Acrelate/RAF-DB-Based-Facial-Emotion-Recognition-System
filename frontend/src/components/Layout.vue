@@ -11,28 +11,28 @@
           >
             <el-icon :size="20"><operation /></el-icon>
           </el-button>
-          <img class="logo-icon" src="@/assets/brand/logo.png" alt="情绪识别系统" />
-          <span class="logo-text">情绪识别系统</span>
+          <span class="logo-icon">◆</span>
+          <span class="logo-text">心镜</span>
         </div>
         
         <nav class="nav-menu">
-          <router-link to="/" class="nav-item" exact-active-class="router-link-active">
+          <router-link to="/app" class="nav-item" exact-active-class="router-link-active">
             <el-icon><home-filled /></el-icon>
             <span>首页</span>
           </router-link>
-          <router-link to="/data-analysis" class="nav-item" exact-active-class="router-link-active">
+          <router-link to="/app/data-analysis" class="nav-item" exact-active-class="router-link-active">
             <el-icon><data-analysis /></el-icon>
             <span>数据分析</span>
           </router-link>
-          <router-link to="/health" class="nav-item" exact-active-class="router-link-active">
+          <router-link to="/app/health" class="nav-item" exact-active-class="router-link-active">
             <el-icon><medal /></el-icon>
             <span>心理健康</span>
           </router-link>
-          <router-link to="/history" class="nav-item" exact-active-class="router-link-active">
+          <router-link to="/app/history" class="nav-item" exact-active-class="router-link-active">
             <el-icon><clock /></el-icon>
             <span>历史记录</span>
           </router-link>
-          <router-link v-if="userStore.isAdmin" to="/admin" class="nav-item admin-nav" exact-active-class="router-link-active">
+          <router-link v-if="userStore.isAdmin" to="/app/admin" class="nav-item" exact-active-class="router-link-active">
             <el-icon><setting /></el-icon>
             <span>管理</span>
           </router-link>
@@ -46,11 +46,44 @@
             inactive-icon="Sunny"
             @change="toggleTheme"
           />
-          <el-badge :value="emotionStore.predictions.length" class="notification-badge">
-            <el-button circle>
-              <el-icon><bell /></el-icon>
-            </el-button>
-          </el-badge>
+          <el-dropdown
+            trigger="click"
+            @command="handleNotificationCommand"
+            @visible-change="handleNotificationVisible"
+            class="notification-dropdown"
+          >
+            <el-badge :value="unreadNotificationCount" :hidden="unreadNotificationCount === 0" class="notification-badge">
+              <el-button circle>
+                <el-icon><bell /></el-icon>
+              </el-button>
+            </el-badge>
+            <template #dropdown>
+              <el-dropdown-menu class="notification-menu">
+                <el-dropdown-item disabled class="notification-header-item">
+                  最近识别
+                </el-dropdown-item>
+                <template v-if="recentNotifications.length > 0">
+                  <el-dropdown-item
+                    v-for="item in recentNotifications"
+                    :key="item.id"
+                    :command="item"
+                  >
+                    <div class="notification-item">
+                      <span class="notification-type">{{ item.typeLabel }}</span>
+                      <span class="notification-title">{{ item.title }}</span>
+                      <span class="notification-time">{{ item.timeText }}</span>
+                    </div>
+                  </el-dropdown-item>
+                  <el-dropdown-item divided command="view-all">
+                    查看全部历史
+                  </el-dropdown-item>
+                </template>
+                <el-dropdown-item v-else disabled>
+                  暂无识别记录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           
           <!-- 用户信息下拉菜单 -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
@@ -89,23 +122,26 @@
     <!-- 侧边栏 -->
     <aside :class="['sidebar', { 'sidebar-collapsed': !sidebarExpanded }]">
       <div class="sidebar-header">
-        <span v-if="sidebarExpanded">🎯 智能分析</span>
+        <div v-if="sidebarExpanded" class="sidebar-section-title">
+          <span class="sidebar-title-spacer" aria-hidden="true"></span>
+          <span>智能分析</span>
+        </div>
       </div>
       <nav class="sidebar-nav">
-        <router-link to="/image-analysis" class="sidebar-item" exact-active-class="router-link-active" title="图片识别">
+        <router-link to="/app/image-analysis" class="sidebar-item" exact-active-class="router-link-active" title="图片识别">
           <el-icon><camera /></el-icon>
           <span v-if="sidebarExpanded">图片识别</span>
         </router-link>
-        <router-link to="/video" class="sidebar-item" exact-active-class="router-link-active" title="视频分析">
+        <router-link to="/app/video" class="sidebar-item" exact-active-class="router-link-active" title="视频分析">
           <el-icon><video-camera /></el-icon>
           <span v-if="sidebarExpanded">视频分析</span>
         </router-link>
         <el-divider v-if="sidebarExpanded" />
-        <router-link to="/user" class="sidebar-item" exact-active-class="router-link-active" title="个人中心">
+        <router-link to="/app/user" class="sidebar-item" exact-active-class="router-link-active" title="个人中心">
           <el-icon><user /></el-icon>
           <span v-if="sidebarExpanded">个人中心</span>
         </router-link>
-        <router-link to="/about" class="sidebar-item" exact-active-class="router-link-active" title="关于系统">
+        <router-link to="/app/about" class="sidebar-item" exact-active-class="router-link-active" title="关于系统">
           <el-icon><info-filled /></el-icon>
           <span v-if="sidebarExpanded">关于系统</span>
         </router-link>
@@ -129,8 +165,8 @@
         </div>
         <div class="footer-section">
           <h4>快速链接</h4>
-          <router-link to="/about">关于我们</router-link>
-          <router-link to="/help">帮助中心</router-link>
+          <router-link to="/app/about">关于我们</router-link>
+          <router-link to="/app/help">帮助中心</router-link>
           <a href="#" @click.prevent="showPrivacy">隐私政策</a>
         </div>
         <div class="footer-section">
@@ -146,16 +182,17 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 情绪识别系统. All rights reserved.</p>
+        <p>&copy; 2025 心镜 · 情绪识别系统. All rights reserved.</p>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEmotionStore } from '../stores/emotion'
+import { useVideoStore } from '../stores/video'
 import { useUserStore } from '../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -178,9 +215,115 @@ import {
 
 const router = useRouter()
 const emotionStore = useEmotionStore()
+const videoStore = useVideoStore()
 const userStore = useUserStore()
 const isDark = ref(false)
 const sidebarExpanded = ref(true)
+const lastReadAt = ref(0)
+
+const getNotificationReadKey = () => {
+  const username = userStore.userInfo?.username || 'guest'
+  return `notification_read_${username}`
+}
+
+const loadLastReadAt = () => {
+  const saved = localStorage.getItem(getNotificationReadKey())
+  lastReadAt.value = saved ? Number(saved) : 0
+}
+
+const markNotificationsAsRead = () => {
+  lastReadAt.value = Date.now()
+  localStorage.setItem(getNotificationReadKey(), String(lastReadAt.value))
+}
+
+const getItemTimestamp = (item, type) => {
+  if (type === 'image') {
+    return new Date(item.timestamp || item.id).getTime()
+  }
+  return new Date(item.timestamp).getTime()
+}
+
+const unreadNotificationCount = computed(() => {
+  let count = 0
+
+  emotionStore.predictions.forEach(pred => {
+    if (getItemTimestamp(pred, 'image') > lastReadAt.value) count++
+  })
+
+  videoStore.videoHistory.forEach(item => {
+    if (getItemTimestamp(item, 'video') > lastReadAt.value) count++
+  })
+
+  return count
+})
+
+const formatNotificationTime = (timestamp) => {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`
+  return `${Math.floor(diff / 86400000)} 天前`
+}
+
+const recentNotifications = computed(() => {
+  const imageItems = emotionStore.predictions.map(pred => ({
+    id: `image-${pred.id}`,
+    type: 'image',
+    typeLabel: '图片',
+    title: pred.emotion_cn || pred.emotion || '情绪识别',
+    timeText: formatNotificationTime(pred.timestamp || pred.id),
+    raw: pred
+  }))
+
+  const videoItems = videoStore.videoHistory.map(item => ({
+    id: `video-${item.id}`,
+    type: 'video',
+    typeLabel: '视频',
+    title: item.video_info?.filename || '视频分析',
+    timeText: formatNotificationTime(item.timestamp),
+    raw: item
+  }))
+
+  return [...imageItems, ...videoItems]
+    .sort((a, b) => {
+      const timeA = a.type === 'image'
+        ? (a.raw.timestamp || a.raw.id)
+        : a.raw.timestamp
+      const timeB = b.type === 'image'
+        ? (b.raw.timestamp || b.raw.id)
+        : b.raw.timestamp
+      return new Date(timeB) - new Date(timeA)
+    })
+    .slice(0, 5)
+})
+
+const handleNotificationVisible = (visible) => {
+  if (visible) {
+    markNotificationsAsRead()
+  }
+}
+
+const handleNotificationCommand = (command) => {
+  markNotificationsAsRead()
+
+  if (command === 'view-all') {
+    router.push('/app/history')
+    return
+  }
+
+  if (command.type === 'image') {
+    emotionStore.currentPrediction = command.raw
+    router.push('/app/image-analysis')
+    return
+  }
+
+  if (command.type === 'video') {
+    router.push('/app/video')
+  }
+}
 
 const toggleSidebar = () => {
   sidebarExpanded.value = !sidebarExpanded.value
@@ -189,11 +332,20 @@ const toggleSidebar = () => {
 
 // 初始化侧边栏状态
 onMounted(() => {
+  loadLastReadAt()
+
   const savedSidebarState = localStorage.getItem('sidebarExpanded')
   if (savedSidebarState !== null) {
     sidebarExpanded.value = savedSidebarState === 'true'
   }
 })
+
+watch(
+  () => userStore.userInfo?.username,
+  () => {
+    loadLastReadAt()
+  }
+)
 
 const toggleTheme = (value) => {
   if (value) {
@@ -225,10 +377,10 @@ const showPrivacy = () => {
 const handleUserCommand = (command) => {
   switch (command) {
     case 'profile':
-      router.push('/user')
+      router.push('/app/user')
       break
     case 'settings':
-      router.push('/user')
+      router.push('/app/settings')
       break
     case 'help':
       ElMessage.info('帮助中心页面开发中...')
@@ -253,7 +405,7 @@ const handleLogout = async () => {
     )
     
     await userStore.logout()
-    router.push('/login')
+    router.push('/')
   } catch (error) {
     // 用户取消登出
   }
@@ -314,25 +466,25 @@ onUnmounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #F5F2E9;
+  background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 35%, #f0f4ff 100%);
   background-attachment: fixed;
 }
 
 /* 顶部导航 */
 .header {
-  background: rgba(245, 242, 233, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  box-shadow: 0 2px 12px rgba(26, 36, 86, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid #E8DCCA;
 }
 
 .header-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 2rem 0 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -342,26 +494,33 @@ onUnmounted(() => {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1A2456;
-  font-family: 'Playfair Display', serif;
+  gap: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #6366f1;
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .sidebar-toggle {
-  color: #1A2456;
+  color: #6366f1;
   font-size: 1.2rem;
-  padding: 0.5rem;
+  padding: 0.25rem;
+  margin-left: -0.15rem;
 }
 
 .logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
-  flex-shrink: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
+  font-size: 1rem;
+  margin-right: 0;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
 }
 
 .nav-menu {
@@ -378,38 +537,22 @@ onUnmounted(() => {
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   text-decoration: none;
-  color: #1A2456;
+  color: #606266;
   font-weight: 500;
   transition: all 0.3s;
   position: relative;
 }
 
 .nav-item:hover {
-  background: rgba(26, 36, 86, 0.1);
-  color: #B71C1C;
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
 }
 
 .nav-item.router-link-active {
-  background: #1A2456;
-  color: white;
-  box-shadow: 0 10px 25px -5px rgba(26, 36, 86, 0.3), 0 8px 10px -6px rgba(26, 36, 86, 0.2);
-}
-
-.admin-nav {
-  background: #B71C1C;
-  color: white;
-  border: 1px solid #B71C1C;
-}
-
-.admin-nav:hover {
-  background: rgba(183, 28, 28, 0.9);
-  color: white;
-}
-
-.admin-nav.router-link-active {
-  background: #8B0000;
-  color: white;
-  box-shadow: 0 10px 25px -5px rgba(183, 28, 28, 0.3);
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  box-shadow: none;
+  font-weight: 600;
 }
 
 .header-actions {
@@ -420,6 +563,50 @@ onUnmounted(() => {
 
 .notification-badge {
   cursor: pointer;
+}
+
+.notification-dropdown {
+  cursor: pointer;
+}
+
+:deep(.notification-menu) {
+  min-width: 280px;
+  max-width: 320px;
+}
+
+.notification-header-item {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b !important;
+  cursor: default;
+}
+
+.notification-header-item.is-disabled {
+  opacity: 1;
+}
+
+.notification-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.4;
+}
+
+.notification-type {
+  font-size: 0.75rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.notification-title {
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 /* 用户下拉菜单样式 */
@@ -437,12 +624,12 @@ onUnmounted(() => {
 }
 
 .user-info:hover {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .username {
   font-weight: 500;
-  color: #1A2456;
+  color: #606266;
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -456,14 +643,13 @@ onUnmounted(() => {
   top: 70px;
   bottom: 0;
   width: 240px;
-  background: rgba(245, 242, 233, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  box-shadow: 2px 0 12px rgba(26, 36, 86, 0.08);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   z-index: 999;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #E8DCCA;
 }
 
 .sidebar.sidebar-collapsed {
@@ -471,21 +657,31 @@ onUnmounted(() => {
 }
 
 .sidebar-header {
-  padding: 1.5rem 1rem;
-  font-size: 1.1rem;
+  padding: 0.75rem 0.5rem 0.5rem;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #1A2456;
-  border-bottom: 1px solid #E8DCCA;
-  text-align: center;
-  font-family: 'Playfair Display', serif;
+  color: #303133;
+}
+
+.sidebar-title-spacer {
+  width: 1.25rem;
+  flex-shrink: 0;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 1rem 0.5rem;
+  padding: 0.5rem 0.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .sidebar-item {
@@ -495,10 +691,14 @@ onUnmounted(() => {
   padding: 0.875rem 1rem;
   border-radius: 8px;
   text-decoration: none;
-  color: #1A2456;
+  color: #606266;
   font-weight: 500;
   transition: all 0.3s;
   white-space: nowrap;
+}
+
+.sidebar-nav :deep(.el-divider) {
+  margin: 0.5rem 1rem;
 }
 
 .sidebar-collapsed .sidebar-item {
@@ -511,15 +711,14 @@ onUnmounted(() => {
 }
 
 .sidebar-item:hover {
-  background: rgba(26, 36, 86, 0.1);
-  color: #B71C1C;
-  transform: translateY(-2px);
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
 }
 
 .sidebar-item.router-link-active {
-  background: #1A2456;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   color: white;
-  box-shadow: 0 10px 25px -5px rgba(26, 36, 86, 0.2);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
 }
 
 .sidebar-item .el-icon {
@@ -547,13 +746,12 @@ onUnmounted(() => {
 
 /* 底部 */
 .footer {
-  background: rgba(245, 242, 233, 0.98);
+  background: rgba(255, 255, 255, 0.95);
   margin-left: 240px;
   transition: margin-left 0.3s ease;
   backdrop-filter: blur(10px);
   margin-top: 4rem;
   padding: 3rem 0 1rem;
-  border-top: 1px solid #E8DCCA;
 }
 
 .footer.sidebar-collapsed {
@@ -571,15 +769,14 @@ onUnmounted(() => {
 }
 
 .footer-section h4 {
-  color: #1A2456;
+  color: #303133;
   margin-bottom: 1rem;
   font-size: 1.1rem;
-  font-family: 'Playfair Display', serif;
 }
 
 .footer-section p,
 .footer-section a {
-  color: rgba(26, 36, 86, 0.7);
+  color: #606266;
   margin: 0.5rem 0;
   text-decoration: none;
   display: block;
@@ -587,14 +784,14 @@ onUnmounted(() => {
 }
 
 .footer-section a:hover {
-  color: #B71C1C;
+  color: #6366f1;
 }
 
 .footer-bottom {
   text-align: center;
   padding-top: 2rem;
-  border-top: 1px solid #E8DCCA;
-  color: rgba(26, 36, 86, 0.6);
+  border-top: 1px solid #e4e7ed;
+  color: #909399;
 }
 
 /* 响应式 */

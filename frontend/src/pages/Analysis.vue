@@ -3,14 +3,19 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <div class="header-content">
-        <div>
-          <h1>📊 数据分析中心</h1>
+        <div class="header-text">
+          <div class="header-title-row">
+            <span class="header-icon-badge">
+              <el-icon :size="20"><DataLine /></el-icon>
+            </span>
+            <h1>数据分析中心</h1>
+          </div>
           <p>深入了解您的情绪模式和变化趋势</p>
         </div>
-        <el-button size="small" type="primary" @click="exportPDFReport" :loading="isExporting">
-          <el-icon><document /></el-icon>
-          导出分析报告
-        </el-button>
+        <button class="btn-export" @click="exportPDFReport" :disabled="isExporting">
+          <el-icon><Document /></el-icon>
+          {{ isExporting ? '导出中...' : '导出分析报告' }}
+        </button>
       </div>
     </div>
 
@@ -23,7 +28,7 @@
         <p style="color: #909399; margin-bottom: 1rem;">
           请先在首页上传照片进行情绪识别，系统会为您生成详细的数据分析
         </p>
-        <el-button type="primary" @click="$router.push('/')">
+        <el-button type="primary" @click="$router.push('/app')">
           前往首页识别
         </el-button>
       </el-empty>
@@ -42,107 +47,208 @@
     </el-card>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stats-cards" v-else>
-      <el-col :xs="12" :sm="12" :md="6" :lg="6">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-              <el-icon><data-line /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ totalPredictions }}</div>
-              <div class="stat-label">总识别次数</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :xs="12" :sm="12" :md="6" :lg="6">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-              <el-icon><avatar /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ dominantEmotion }}</div>
-              <div class="stat-label">主导情绪</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :xs="12" :sm="12" :md="6" :lg="6">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
-              <el-icon><trend-charts /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ avgConfidence }}%</div>
-              <div class="stat-label">平均置信度</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :xs="12" :sm="12" :md="6" :lg="6">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">
-              <el-icon><calendar /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ activeDays }}</div>
-              <div class="stat-label">活跃天数</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 数据来源统计 -->
-    <el-card class="data-source-card" shadow="hover" v-if="totalPredictions > 0">
-      <template #header>
-        <div class="card-header">
-          <span>📊 数据来源分布</span>
+    <div class="stats-grid" v-else>
+      <div class="kpi-card">
+        <div class="kpi-icon purple">
+          <el-icon :size="22"><DataLine /></el-icon>
         </div>
-      </template>
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="12" :md="8">
-          <div class="source-stat">
-            <div class="source-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-              📸
+        <div class="kpi-body">
+          <span class="kpi-label">总识别次数</span>
+          <span class="kpi-value">{{ totalPredictions }}</span>
+          <span class="kpi-trend" :class="totalWeekTrend.type">
+            <span class="trend-arrow">{{ totalWeekTrend.arrow }}</span>
+            {{ totalWeekTrend.text }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon pink">
+          <span class="kpi-emoji">{{ dominantEmotionEmoji }}</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">主导情绪</span>
+          <span class="kpi-value kpi-value-text">{{ dominantEmotion }}</span>
+          <span class="kpi-trend neutral">
+            占比 {{ dominantEmotionRatio }}%
+            <span class="dominant-bar" :style="{ width: `${dominantEmotionRatio}%` }"></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon blue">
+          <el-icon :size="22"><CircleCheck /></el-icon>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">平均置信度</span>
+          <span class="kpi-value">{{ avgConfidence }}%</span>
+          <span class="kpi-trend" :class="[confidenceWeekTrend.type, confidenceWeekTrend.type === 'up' ? 'blue' : '']">
+            <span class="trend-arrow">{{ confidenceWeekTrend.arrow }}</span>
+            {{ confidenceWeekTrend.text }}
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon green">
+          <el-icon :size="22"><Calendar /></el-icon>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">活跃天数</span>
+          <span class="kpi-value">{{ activeDays }}</span>
+          <span class="kpi-trend" :class="activeDaysTrend.type">
+            {{ activeDaysTrend.text }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间分析区：数据来源 + 情绪分布 + 健康评分 -->
+    <div class="middle-section" v-if="totalPredictions > 0">
+      <div class="middle-row">
+        <!-- 数据来源分布 -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-icon-badge purple">
+              <el-icon :size="16"><DataLine /></el-icon>
+            </span>
+            <span class="panel-title">数据来源分布</span>
+          </div>
+          <div class="source-panel-body">
+            <div class="source-donut-wrap">
+              <div ref="dataSourceDonutChart" class="source-donut"></div>
+              <div class="source-donut-center">
+                <span class="donut-percent">{{ dominantSourcePercent }}%</span>
+                <span class="donut-label">{{ dominantSourceLabel }}</span>
+              </div>
             </div>
-            <div class="source-info">
-              <div class="source-value">{{ imageCount }}</div>
-              <div class="source-label">图片识别</div>
+            <div class="source-legend">
+              <div
+                v-for="item in dataSourceStats"
+                :key="item.label"
+                class="legend-item"
+              >
+                <span class="legend-dot" :style="{ background: item.color }"></span>
+                <span class="legend-label">{{ item.label }}</span>
+                <div class="legend-bar-track">
+                  <div
+                    class="legend-bar-fill"
+                    :style="{ width: `${item.percent}%`, background: item.color }"
+                  ></div>
+                </div>
+                <span class="legend-value">{{ item.count }} ({{ item.percent }}%)</span>
+              </div>
             </div>
           </div>
-        </el-col>
-        <el-col :xs="24" :sm="12" :md="8">
-          <div class="source-stat">
-            <div class="source-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-              🎬
-            </div>
-            <div class="source-info">
-              <div class="source-value">{{ videoCount }}</div>
-              <div class="source-label">视频帧分析</div>
+        </div>
+
+        <!-- 情绪分布 -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-icon-badge pink">🎯</span>
+            <span class="panel-title">情绪分布</span>
+          </div>
+          <div class="emotion-bars">
+            <div
+              v-for="item in emotionDistributionPreview"
+              :key="item.name"
+              class="emotion-bar-row"
+            >
+              <span class="emotion-emoji">{{ item.emoji }}</span>
+              <span class="emotion-name">{{ item.name }}</span>
+              <div class="emotion-bar-track">
+                <div
+                  class="emotion-bar-fill"
+                  :style="{ width: `${item.percent}%`, background: item.color }"
+                ></div>
+              </div>
+              <span class="emotion-percent">{{ item.percent }}%</span>
             </div>
           </div>
-        </el-col>
-        <el-col :xs="24" :sm="12" :md="8">
-          <div class="source-stat">
-            <div class="source-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">
-              📹
+        </div>
+      </div>
+
+      <!-- 情绪健康评分 -->
+      <div class="panel-card health-panel">
+        <div class="panel-header">
+          <span class="panel-icon-badge green">💚</span>
+          <span class="panel-title">情绪健康评分</span>
+        </div>
+        <div class="health-panel-body">
+          <div class="health-gauge-section">
+            <div class="health-ring-wrap">
+              <svg class="health-ring-svg" viewBox="0 0 120 120">
+                <defs>
+                  <linearGradient id="healthRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#60a5fa" />
+                    <stop offset="100%" stop-color="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#f1f5f9" stroke-width="10" />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="url(#healthRingGradient)"
+                  stroke-width="10"
+                  stroke-linecap="round"
+                  :stroke-dasharray="`${healthRingDash} 327`"
+                  transform="rotate(-90 60 60)"
+                />
+              </svg>
+              <div class="health-ring-center">
+                <span class="ring-score">{{ healthScore.score }}</span>
+                <span class="ring-max">/ 100</span>
+              </div>
             </div>
-            <div class="source-info">
-              <div class="source-value">{{ videoStore.videoHistory.length }}</div>
-              <div class="source-label">视频文件数</div>
+            <span class="health-level-badge" :class="healthScore.level">{{ healthScore.level_text }}</span>
+          </div>
+
+          <div class="health-middle">
+            <p class="health-desc">{{ healthScore.summary }}</p>
+            <div class="health-breakdown">
+              <div class="breakdown-item">
+                <span class="breakdown-icon-wrap positive">😊</span>
+                <div class="breakdown-text">
+                  <span class="breakdown-label">积极情绪占比</span>
+                  <span class="breakdown-value positive">{{ healthScore.positive_rate }}%</span>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <span class="breakdown-icon-wrap neutral">😐</span>
+                <div class="breakdown-text">
+                  <span class="breakdown-label">中性情绪占比</span>
+                  <span class="breakdown-value neutral">{{ healthScore.neutral_rate }}%</span>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <span class="breakdown-icon-wrap negative">😠</span>
+                <div class="breakdown-text">
+                  <span class="breakdown-label">消极情绪占比</span>
+                  <span class="breakdown-value negative">{{ healthScore.negative_rate }}%</span>
+                </div>
+              </div>
             </div>
           </div>
-        </el-col>
-      </el-row>
-    </el-card>
+
+          <div class="health-advice-box">
+            <h4 class="advice-title">
+              <span class="advice-title-icon">💡</span>
+              健康建议
+            </h4>
+            <ul class="advice-list">
+              <li v-for="(item, index) in healthAdviceList" :key="index" class="advice-item">
+                <span class="advice-icon" :style="{ background: item.bg }">{{ item.icon }}</span>
+                <span class="advice-text">{{ item.text }}</span>
+              </li>
+            </ul>
+            <span class="advice-decoration" aria-hidden="true">🌿</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 视频情绪变化分析 -->
     <el-card class="video-analysis-card" shadow="hover" v-if="videoStore.videoHistory.length > 0">
@@ -259,44 +365,6 @@
       <el-empty v-else description="请选择一个视频查看详细分析" />
     </el-card>
 
-    <!-- 情绪健康评分卡片 -->
-    <el-card class="health-score-card" shadow="hover" v-if="totalPredictions > 0">
-      <div class="health-score-content">
-        <div class="score-left">
-          <div class="score-circle" :class="healthScore.level">
-            <div class="score-value">{{ healthScore.score }}</div>
-            <div class="score-max">/100</div>
-          </div>
-          <div class="score-level">
-            <el-tag :type="healthScore.tagType" size="large" effect="dark">
-              {{ healthScore.level_text }}
-            </el-tag>
-          </div>
-        </div>
-        <div class="score-right">
-          <h3>💚 情绪健康评分</h3>
-          <div class="score-details">
-            <div class="detail-item">
-              <span class="label">积极情绪占比:</span>
-              <el-progress :percentage="healthScore.positive_rate" color="#67c23a" :stroke-width="12" />
-            </div>
-            <div class="detail-item">
-              <span class="label">消极情绪占比:</span>
-              <el-progress :percentage="healthScore.negative_rate" color="#f56c6c" :stroke-width="12" />
-            </div>
-            <div class="detail-item">
-              <span class="label">情绪波动指数:</span>
-              <el-progress :percentage="healthScore.stability" :color="getStabilityColor(healthScore.stability)" :stroke-width="12" />
-            </div>
-          </div>
-          <div class="score-advice">
-            <el-icon><warning-filled /></el-icon>
-            <span>{{ healthScore.advice }}</span>
-          </div>
-        </div>
-      </div>
-    </el-card>
-
     <!-- 图表区域 -->
     <el-row :gutter="20" v-if="totalPredictions > 0">
       <!-- 情绪分布饼图 -->
@@ -398,11 +466,9 @@ import { useEmotionStore } from '../stores/emotion'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   DataLine,
-  Avatar,
-  TrendCharts,
+  CircleCheck,
   Calendar,
   Document,
-  WarningFilled,
   Delete
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
@@ -473,6 +539,102 @@ const videoCount = computed(() => {
   return allPredictions.value.filter(p => p.source === 'video').length
 })
 
+const videoFileCount = computed(() => videoStore.videoHistory?.length || 0)
+
+const dataSourceStats = computed(() => {
+  const predTotal = totalPredictions.value || 1
+  const img = imageCount.value
+  const vid = videoCount.value
+  const files = videoFileCount.value
+  const filePercent = files === 0 ? 0 : Math.round((files / Math.max(files + img + vid, 1)) * 100)
+
+  return [
+    { label: '图片识别', count: img, percent: Math.round((img / predTotal) * 100), color: '#8b5cf6' },
+    { label: '视频分析', count: vid, percent: Math.round((vid / predTotal) * 100), color: '#3b82f6' },
+    { label: '视频文件', count: files, percent: filePercent, color: '#10b981' }
+  ]
+})
+
+const dominantSourceLabel = computed(() => {
+  const stats = dataSourceStats.value.filter(s => s.label !== '视频文件')
+  const top = stats.reduce((max, item) => (item.count > max.count ? item : max), stats[0])
+  if (!top || top.count === 0) return '暂无数据'
+  return top.label
+})
+
+const dominantSourcePercent = computed(() => {
+  const stats = dataSourceStats.value.filter(s => s.label !== '视频文件')
+  const top = stats.reduce((max, item) => (item.count > max.count ? item : max), stats[0])
+  return top?.percent || 0
+})
+
+const RAF_EMOTIONS = ['生气', '厌恶', '害怕', '高兴', '平静', '悲伤', '惊讶']
+
+const emotionBarColors = {
+  '生气': '#f472b6',
+  '厌恶': '#a78bfa',
+  '害怕': '#fb923c',
+  '高兴': '#34d399',
+  '平静': '#fbbf24',
+  '悲伤': '#60a5fa',
+  '惊讶': '#c084fc'
+}
+
+const EMOTION_PREVIEW_NAMES = ['生气', '悲伤', '平静', '高兴']
+
+const emotionDistribution = computed(() => {
+  const total = totalPredictions.value || 1
+  const counts = {}
+  allPredictions.value.forEach(pred => {
+    counts[pred.emotion_cn] = (counts[pred.emotion_cn] || 0) + 1
+  })
+
+  return RAF_EMOTIONS.map(name => ({
+    name,
+    emoji: cnEmotionEmojiMap[name] || '😐',
+    count: counts[name] || 0,
+    percent: Math.round(((counts[name] || 0) / total) * 100),
+    color: emotionBarColors[name] || '#94a3b8'
+  }))
+})
+
+const emotionDistributionPreview = computed(() => {
+  const map = Object.fromEntries(emotionDistribution.value.map(item => [item.name, item]))
+  return EMOTION_PREVIEW_NAMES.map(name => map[name] || {
+    name,
+    emoji: cnEmotionEmojiMap[name] || '😐',
+    count: 0,
+    percent: 0,
+    color: emotionBarColors[name] || '#94a3b8'
+  })
+})
+
+const healthAdviceList = computed(() => {
+  const score = healthScore.value.score
+  if (score >= 85) {
+    return [
+      { icon: '🌟', bg: '#fef9c3', text: '保持当前良好状态，继续规律作息' },
+      { icon: '😊', bg: '#dcfce7', text: '多参与社交活动，分享积极情绪' },
+      { icon: '🏃', bg: '#ffedd5', text: '坚持适度运动，增强身心活力' },
+      { icon: '📖', bg: '#ede9fe', text: '培养兴趣爱好，丰富精神生活' }
+    ]
+  }
+  if (score >= 70) {
+    return [
+      { icon: '🧘', bg: '#fce7f3', text: '继续保持良好心态，适当放松' },
+      { icon: '🌙', bg: '#fef9c3', text: '保持规律作息，保证充足睡眠' },
+      { icon: '💬', bg: '#dbeafe', text: '与亲友沟通，分享您的感受' },
+      { icon: '🏃', bg: '#ffedd5', text: '适当进行运动，释放压力' }
+    ]
+  }
+  return [
+    { icon: '🧠', bg: '#fce7f3', text: '尝试进行深呼吸或冥想练习' },
+    { icon: '🌙', bg: '#fef9c3', text: '保持规律作息，保证充足睡眠' },
+    { icon: '💬', bg: '#dbeafe', text: '与亲友沟通，分享您的感受' },
+    { icon: '🏃', bg: '#ffedd5', text: '适当进行运动，释放压力' }
+  ]
+})
+
 // 统计数据
 const totalPredictions = computed(() => allPredictions.value.length)
 
@@ -515,6 +677,114 @@ const activeDays = computed(() => {
   return dates.size
 })
 
+const emotionEmojiMap = {
+  anger: '😠',
+  disgust: '🤢',
+  fear: '😨',
+  happy: '😊',
+  normal: '😐',
+  sad: '😢',
+  surprised: '😲'
+}
+
+const cnEmotionEmojiMap = {
+  '生气': '😠',
+  '厌恶': '🤢',
+  '害怕': '😨',
+  '高兴': '😊',
+  '平静': '😐',
+  '悲伤': '😢',
+  '惊讶': '😲'
+}
+
+const dominantEmotionRatio = computed(() => {
+  if (allPredictions.value.length === 0 || dominantEmotion.value === '-') return 0
+  const count = allPredictions.value.filter(p => p.emotion_cn === dominantEmotion.value).length
+  return Math.round((count / allPredictions.value.length) * 100)
+})
+
+const dominantEmotionEmoji = computed(() => {
+  if (dominantEmotion.value === '-') return '😐'
+  const pred = allPredictions.value.find(p => p.emotion_cn === dominantEmotion.value)
+  if (pred?.emotion) return emotionEmojiMap[pred.emotion] || '😐'
+  return cnEmotionEmojiMap[dominantEmotion.value] || '😐'
+})
+
+const filterPredictionsByDaysAgo = (minDays, maxDays) => {
+  const now = new Date()
+  return allPredictions.value.filter(pred => {
+    const diffDays = Math.floor((now - new Date(pred.timestamp)) / 86400000)
+    return diffDays >= minDays && diffDays <= maxDays
+  })
+}
+
+const thisWeekPredictions = computed(() => filterPredictionsByDaysAgo(0, 6))
+const lastWeekPredictions = computed(() => filterPredictionsByDaysAgo(7, 13))
+
+const calcAvgConfidence = (predictions) => {
+  if (!predictions.length) return null
+  const sum = predictions.reduce((acc, pred) => acc + pred.confidence, 0)
+  return (sum / predictions.length) * 100
+}
+
+const countActiveDaysIn = (predictions) => {
+  const dates = new Set(predictions.map(p => new Date(p.timestamp).toDateString()))
+  return dates.size
+}
+
+const totalWeekTrend = computed(() => {
+  const curr = thisWeekPredictions.value.length
+  const prev = lastWeekPredictions.value.length
+  if (prev === 0 && curr === 0) {
+    return { type: 'flat', arrow: '—', text: '与上周持平' }
+  }
+  if (prev === 0) {
+    return { type: 'up', arrow: '↑', text: `+100% 较上周` }
+  }
+  const change = ((curr - prev) / prev) * 100
+  if (Math.abs(change) < 0.5) {
+    return { type: 'flat', arrow: '—', text: '与上周持平' }
+  }
+  const sign = change > 0 ? '+' : ''
+  return {
+    type: change >= 0 ? 'up' : 'down',
+    arrow: change >= 0 ? '↑' : '↓',
+    text: `${sign}${change.toFixed(0)}% 较上周`
+  }
+})
+
+const confidenceWeekTrend = computed(() => {
+  const curr = calcAvgConfidence(thisWeekPredictions.value)
+  const prev = calcAvgConfidence(lastWeekPredictions.value)
+  if (curr === null || prev === null) {
+    return { type: 'flat', arrow: '—', text: '与上周持平' }
+  }
+  const change = curr - prev
+  if (Math.abs(change) < 0.1) {
+    return { type: 'flat', arrow: '—', text: '与上周持平' }
+  }
+  const sign = change > 0 ? '+' : ''
+  return {
+    type: change >= 0 ? 'up' : 'down',
+    arrow: change >= 0 ? '↑' : '↓',
+    text: `${sign}${change.toFixed(1)}% 较上周`
+  }
+})
+
+const activeDaysTrend = computed(() => {
+  const curr = countActiveDaysIn(thisWeekPredictions.value)
+  const prev = countActiveDaysIn(lastWeekPredictions.value)
+  const diff = curr - prev
+  if (diff === 0) {
+    return { type: 'flat', text: '— 与上周持平' }
+  }
+  const sign = diff > 0 ? '+' : ''
+  return {
+    type: diff > 0 ? 'up' : 'down',
+    text: `${sign}${diff} 天 较上周`
+  }
+})
+
 // 情绪健康评分
 const healthScore = computed(() => {
   if (allPredictions.value.length === 0) {
@@ -524,23 +794,28 @@ const healthScore = computed(() => {
       level_text: '暂无数据',
       tagType: 'info',
       positive_rate: 0,
+      neutral_rate: 0,
       negative_rate: 0,
       stability: 0,
-      advice: '请先进行情绪识别以获取健康评分'
+      advice: '请先进行情绪识别以获取健康评分',
+      summary: '请先进行情绪识别以获取健康评分'
     }
   }
 
-  // 积极情绪：happy, normal
+  // 积极情绪：happy
+  // 中性情绪：normal, surprised
   // 消极情绪：anger, sad, fear, disgust
-  // 中性情绪：surprised
   let positiveCount = 0
+  let neutralCount = 0
   let negativeCount = 0
   const emotionValues = []
   const emotionMap = { anger: 1, disgust: 2, fear: 3, sad: 4, normal: 5, surprised: 6, happy: 7 }
 
   allPredictions.value.forEach(pred => {
-    if (pred.emotion === 'happy' || pred.emotion === 'normal') {
+    if (pred.emotion === 'happy') {
       positiveCount++
+    } else if (pred.emotion === 'normal' || pred.emotion === 'surprised') {
+      neutralCount++
     } else if (['anger', 'sad', 'fear', 'disgust'].includes(pred.emotion)) {
       negativeCount++
     }
@@ -549,6 +824,7 @@ const healthScore = computed(() => {
 
   const total = allPredictions.value.length
   const positiveRate = Math.round((positiveCount / total) * 100)
+  const neutralRate = Math.round((neutralCount / total) * 100)
   const negativeRate = Math.round((negativeCount / total) * 100)
 
   // 计算情绪波动（使用标准差的倒数作为稳定性指标）
@@ -560,27 +836,37 @@ const healthScore = computed(() => {
   // 计算总分（积极占比40%，消极占比的反向30%，稳定性30%）
   const score = Math.round(positiveRate * 0.4 + (100 - negativeRate) * 0.3 + stability * 0.3)
 
-  let level, level_text, tagType, advice
+  let level, level_text, tagType, advice, summary
   if (score >= 85) {
     level = 'excellent'
     level_text = '优秀'
     tagType = 'success'
     advice = '您的情绪状态非常健康！保持积极乐观的心态，继续加油！'
+    summary = '您的情绪健康状态优秀，积极情绪占比较高，请继续保持良好的生活习惯。'
   } else if (score >= 70) {
     level = 'good'
     level_text = '良好'
     tagType = 'success'
     advice = '您的情绪状态良好，继续保持规律作息和适度运动。'
+    summary = '您的情绪健康状态良好，整体情绪较为稳定，建议继续保持。'
   } else if (score >= 55) {
     level = 'normal'
     level_text = '一般'
     tagType = 'warning'
     advice = '建议多参与社交活动，尝试放松技巧，如冥想、瑜伽等。'
+    summary = '您的情绪健康评分一般，建议适当关注情绪变化，保持积极生活方式。'
+  } else if (score >= 40) {
+    level = 'low'
+    level_text = '偏低'
+    tagType = 'danger'
+    advice = '您的情绪波动较大，建议关注情绪状态，适当放松心情。'
+    summary = '您的情绪健康评分偏低，建议关注情绪状态，适当放松心情，保持积极的生活方式。'
   } else {
     level = 'need-attention'
-    level_text = '需要关注'
+    level_text = '偏低'
     tagType = 'danger'
     advice = '您的情绪波动较大，建议咨询专业心理咨询师，及时调整心态。'
+    summary = '您的情绪健康评分偏低，建议关注情绪状态，适当放松心情，保持积极的生活方式。'
   }
 
   return {
@@ -589,11 +875,15 @@ const healthScore = computed(() => {
     level_text,
     tagType,
     positive_rate: positiveRate,
+    neutral_rate: neutralRate,
     negative_rate: negativeRate,
     stability: Math.round(stability),
-    advice
+    advice,
+    summary
   }
 })
+
+const healthRingDash = computed(() => (healthScore.value.score / 100) * 327)
 
 function getStabilityColor(stability) {
   if (stability >= 70) return '#67c23a'
@@ -608,17 +898,6 @@ const comparisonSummary = ref({
   type: 'info',
   description: '暂无对比数据'
 })
-
-// 情绪映射
-const emotionEmojiMap = {
-  anger: '😠',
-  disgust: '🤢',
-  fear: '😨',
-  happy: '😊',
-  normal: '😐',
-  sad: '😢',
-  surprised: '😲'
-}
 
 const emotionCnMap = {
   anger: '生气',
@@ -820,6 +1099,7 @@ function formatDateTime(timestamp) {
 }
 
 // 图表
+const dataSourceDonutChart = ref(null)
 const emotionPieChart = ref(null)
 const emotionTrendChart = ref(null)
 const confidenceChart = ref(null)
@@ -828,6 +1108,50 @@ const emotionCalendarChart = ref(null)
 
 const trendPeriod = ref('7d')
 const currentYear = ref(new Date().getFullYear())
+
+let dataSourceChartInstance = null
+
+function initDataSourceDonutChart() {
+  if (!dataSourceDonutChart.value || totalPredictions.value === 0) return
+
+  if (dataSourceChartInstance) {
+    dataSourceChartInstance.dispose()
+  }
+  dataSourceChartInstance = echarts.init(dataSourceDonutChart.value)
+
+  const chartData = [
+    { value: imageCount.value, name: '图片识别', itemStyle: { color: '#8b5cf6' } },
+    { value: videoCount.value, name: '视频分析', itemStyle: { color: '#3b82f6' } }
+  ].filter(item => item.value > 0)
+
+  if (chartData.length === 0) {
+    chartData.push({ value: 1, name: '暂无', itemStyle: { color: '#e2e8f0' } })
+  }
+
+  dataSourceChartInstance.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 次 ({d}%)' },
+    series: [{
+      type: 'pie',
+      radius: ['62%', '82%'],
+      center: ['50%', '50%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: {
+        borderRadius: 4,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      data: chartData
+    }]
+  }, true)
+}
+
+function updateMiddleSectionCharts() {
+  nextTick(() => {
+    initDataSourceDonutChart()
+  })
+}
 
 // 初始化饼图
 function initPieChart() {
@@ -1595,6 +1919,7 @@ async function exportPDFReport() {
 // 初始化所有图表
 function initAllCharts() {
   nextTick(() => {
+    initDataSourceDonutChart()
     initPieChart()
     initTrendChart()
     initConfidenceChart()
@@ -1603,6 +1928,11 @@ function initAllCharts() {
     initComparisonChart()
   })
 }
+
+watch(
+  () => [totalPredictions.value, imageCount.value, videoCount.value],
+  () => updateMiddleSectionCharts()
+)
 
 onMounted(() => {
   initAllCharts()
@@ -1616,11 +1946,12 @@ onMounted(() => {
 }
 
 .page-header {
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(124, 77, 255, 0.08);
+  border: 1px solid rgba(241, 245, 249, 0.9);
 }
 
 .header-content {
@@ -1631,34 +1962,185 @@ onMounted(() => {
   gap: 1rem;
 }
 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.header-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-text h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.header-text p {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin: 0;
+  padding-left: calc(36px + 0.65rem);
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.35rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(124, 77, 255, 0.28);
+}
+
+.btn-export:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
+}
+
+.btn-export:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
-    text-align: center;
+    align-items: flex-start;
   }
-  
-  .page-header h1 {
-    text-align: center;
-  }
-  
-  .page-header p {
-    text-align: center;
+
+  .header-text p {
+    padding-left: 0;
   }
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  color: #303133;
-  margin-bottom: 0.5rem;
+/* KPI 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
-.page-header p {
-  color: #606266;
-  font-size: 1.1rem;
+.kpi-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.35rem 1.25rem;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(241, 245, 249, 0.9);
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
 }
 
-.stats-cards {
-  margin-bottom: 2rem;
+.kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.kpi-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.kpi-icon.pink { background: linear-gradient(135deg, #f472b6, #fb7185); }
+.kpi-icon.blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+.kpi-icon.green { background: linear-gradient(135deg, #34d399, #10b981); }
+
+.kpi-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.kpi-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.kpi-value-text {
+  font-size: 1.5rem;
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+  position: relative;
+}
+
+.kpi-trend.up { color: #22c55e; }
+.kpi-trend.up.blue { color: #3b82f6; }
+.kpi-trend.down { color: #ef4444; }
+.kpi-trend.flat,
+.kpi-trend.neutral { color: #94a3b8; }
+
+.trend-arrow {
+  font-weight: 700;
+}
+
+.kpi-trend.neutral {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.dominant-bar {
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f472b6, #fb7185);
+  transition: width 0.3s;
+}
+
+@media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
@@ -1699,50 +2181,470 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
-/* 数据来源统计卡片 */
-.data-source-card {
-  margin-bottom: 2rem;
+/* 中间分析区 */
+.middle-section {
+  margin-bottom: 1.5rem;
 }
 
-.source-stat {
+.middle-row {
+  display: grid;
+  grid-template-columns: 0.42fr 0.58fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel-card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(241, 245, 249, 0.9);
+  box-shadow: 0 4px 24px rgba(124, 77, 255, 0.06);
+  padding: 1.35rem 1.5rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.35rem;
+}
+
+.panel-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.panel-icon-badge.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.panel-icon-badge.pink { background: linear-gradient(135deg, #f472b6, #fb7185); color: #fff; }
+.panel-icon-badge.green { background: linear-gradient(135deg, #34d399, #10b981); }
+
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* 数据来源分布 */
+.source-panel-body {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 1rem;
-  background: #f5f7fa;
-  border-radius: 8px;
-  margin-bottom: 1rem;
 }
 
-.source-icon {
-  width: 50px;
-  height: 50px;
+.source-donut-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.source-donut {
+  width: 100%;
+  height: 100%;
+}
+
+.source-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donut-percent {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #7c3aed;
+  line-height: 1.2;
+}
+
+.donut-label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+.source-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 10px auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.legend-bar-track {
+  height: 5px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.legend-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.legend-value {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* 情绪分布 */
+.emotion-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.15rem;
+}
+
+.emotion-bar-row {
+  display: grid;
+  grid-template-columns: 24px 40px 1fr 38px;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.emotion-emoji {
+  font-size: 1rem;
+  text-align: center;
+}
+
+.emotion-name {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.emotion-bar-track {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.emotion-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.emotion-percent {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: right;
+}
+
+/* 情绪健康评分 */
+.health-panel {
+  padding-bottom: 1.5rem;
+}
+
+.health-panel-body {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(220px, 1fr) minmax(340px, 1.45fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.health-gauge-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+}
+
+.health-ring-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.health-ring-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.health-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-score {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #6d28d9;
+  line-height: 1;
+}
+
+.ring-max {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.health-level-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.28rem 0.95rem;
+  border-radius: 999px;
+}
+
+.health-level-badge.excellent,
+.health-level-badge.good {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.health-level-badge.normal {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.health-level-badge.low,
+.health-level-badge.need-attention {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.health-middle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-right: 0.5rem;
+}
+
+.health-desc {
+  font-size: 0.92rem;
+  color: #64748b;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.health-breakdown {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(124, 77, 255, 0.04);
+}
+
+.breakdown-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.breakdown-icon-wrap.positive { background: #f0fdf4; }
+.breakdown-icon-wrap.neutral { background: #fffbeb; }
+.breakdown-icon-wrap.negative { background: #fef2f2; }
+
+.breakdown-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.breakdown-label {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.breakdown-value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.breakdown-value.positive { color: #22c55e; }
+.breakdown-value.neutral { color: #f59e0b; }
+.breakdown-value.negative { color: #ef4444; }
+
+.health-advice-box {
+  position: relative;
+  background: linear-gradient(145deg, #f5f3ff 0%, #eef2ff 55%, #f0f9ff 100%);
+  border-radius: 16px;
+  padding: 1.35rem 1.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.14);
+  height: 100%;
+  min-height: 240px;
+}
+
+.advice-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+.advice-title-icon {
+  font-size: 1rem;
+}
+
+.advice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: relative;
+  z-index: 1;
+}
+
+.advice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.advice-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
 }
 
-.source-info {
-  flex: 1;
+.advice-text {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.55;
+  padding-top: 0.15rem;
 }
 
-.source-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 0.25rem;
+.advice-decoration {
+  position: absolute;
+  bottom: -12px;
+  right: 4px;
+  font-size: 4rem;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(-15deg);
 }
 
-.source-label {
-  color: #606266;
-  font-size: 0.9rem;
+@media (max-width: 1100px) {
+  .middle-row {
+    grid-template-columns: 1fr;
+  }
+
+  .health-panel-body {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .health-gauge-section {
+    padding-top: 0.5rem;
+  }
+
+  .health-breakdown {
+    gap: 0.65rem;
+  }
+
+  .breakdown-item {
+    min-width: calc(50% - 0.35rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .source-panel-body {
+    flex-direction: column;
+  }
+
+  .legend-item {
+    grid-template-columns: 10px auto 1fr auto;
+  }
+
+  .health-breakdown {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
 }
 
 .chart-card {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  border-radius: 20px !important;
+  border: 1px solid rgba(241, 245, 249, 0.9) !important;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06) !important;
+}
+
+.chart-card :deep(.el-card__header) {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1rem 1.25rem;
+}
+
+.chart-card :deep(.el-card__body) {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.video-analysis-card {
+  margin-bottom: 1.25rem;
+  border-radius: 20px !important;
+  border: 1px solid rgba(241, 245, 249, 0.9) !important;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06) !important;
+}
+
+.video-analysis-card :deep(.el-card__header) {
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .card-header {
@@ -1750,7 +2652,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  color: #1e293b;
 }
 
 .chart-container {
@@ -1764,10 +2667,6 @@ onMounted(() => {
 }
 
 /* 视频分析卡片 */
-.video-analysis-card {
-  margin-bottom: 2rem;
-}
-
 .video-summary {
   margin-bottom: 20px;
   padding: 20px;
@@ -1820,149 +2719,9 @@ onMounted(() => {
   }
 }
 
-/* 情绪健康评分卡片样式 */
-.health-score-card {
-  margin-bottom: 2rem;
-}
-
-.health-score-content {
-  display: flex;
-  align-items: center;
-  gap: 3rem;
-  padding: 1rem;
-}
-
-.score-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.score-circle {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.score-circle.excellent {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.score-circle.good {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.score-circle.normal {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-}
-
-.score-circle.need-attention {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.score-value {
-  font-size: 3rem;
-  font-weight: bold;
-  color: white;
-  line-height: 1;
-}
-
-.score-max {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 0.25rem;
-}
-
-.score-level {
-  margin-top: 0.5rem;
-}
-
-.score-right {
-  flex: 1;
-}
-
-.score-right h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #303133;
-}
-
-.score-details {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.detail-item .label {
-  width: 120px;
-  font-weight: 500;
-  color: #606266;
-}
-
-.score-advice {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: #f0f9ff;
-  border-left: 4px solid #409eff;
-  border-radius: 4px;
-  color: #606266;
-  line-height: 1.6;
-}
-
-.score-advice .el-icon {
-  color: #409eff;
-  margin-top: 2px;
-}
-
 /* 对比分析样式 */
 .comparison-summary {
   margin-top: 1rem;
-}
-
-@media (max-width: 768px) {
-  .health-score-content {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .score-circle {
-    width: 120px;
-    height: 120px;
-  }
-  
-  .score-value {
-    font-size: 2.5rem;
-  }
-  
-  .score-right h3 {
-    font-size: 1.2rem;
-    text-align: center;
-  }
-  
-  .detail-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .detail-item .label {
-    width: 100%;
-  }
 }
 
 /* 视频快速选择列表样式 */

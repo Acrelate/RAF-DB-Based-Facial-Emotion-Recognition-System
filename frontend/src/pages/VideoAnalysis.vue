@@ -489,7 +489,10 @@ import {
   Download
 } from '@element-plus/icons-vue'
 import { useVideoStore } from '@/stores/video'
+import axios from 'axios'
 import api from '@/api/client'  // 🔑 导入封装好的 api，会自动附加 token
+
+const API_BASE_URL = 'http://localhost:5000/api'
 
 // Store
 const videoStore = useVideoStore()

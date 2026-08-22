@@ -84,7 +84,7 @@
           <template #header>
             <div class="card-header">
               <span>📜 识别历史</span>
-              <el-button text @click="$router.push('/history')">查看全部</el-button>
+              <el-button text @click="$router.push('/app/history')">查看全部</el-button>
             </div>
           </template>
           <div class="history-list">
@@ -343,7 +343,7 @@ function handleHistoryItemClick(prediction) {
 
 // 跳转到心理健康页面
 function goToHealth() {
-  router.push('/health')
+  router.push('/app/health')
 }
 
 // 摄像头功能

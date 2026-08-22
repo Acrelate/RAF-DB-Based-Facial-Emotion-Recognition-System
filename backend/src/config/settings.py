@@ -2,6 +2,7 @@
 配置文件 — 路径与运行参数的单一来源
 """
 import os
+import warnings
 from pathlib import Path
 
 # backend/src/config -> backend/src -> backend -> project root
@@ -66,7 +67,6 @@ DATABASE_URI = os.environ.get(
 DATABASE_CONFIG = {
     'type': 'sqlite',
     'sqlite_path': SQLITE_PATH,
-    # 可选 MySQL 示例（请通过环境变量配置真实凭据，勿将生产密码写入仓库）
     'mysql': {
         'host': os.environ.get('MYSQL_HOST', 'localhost'),
         'port': int(os.environ.get('MYSQL_PORT', '3306')),
@@ -87,9 +87,7 @@ LOG_CONFIG = {
 for _dir in (UPLOAD_FOLDER, LOG_DIR, DB_DIR):
     _dir.mkdir(parents=True, exist_ok=True)
 
-# 弱默认密钥提醒（生产务必通过环境变量覆盖）
 if os.environ.get('JWT_SECRET_KEY') in (None, '', 'your-secret-key-change-in-production'):
-    import warnings
     warnings.warn(
         'JWT_SECRET_KEY 未设置或仍为默认值，生产环境请通过环境变量配置强随机密钥。',
         UserWarning,

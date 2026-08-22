@@ -7,6 +7,7 @@ import App from './App.vue'
 import router from './router'
 import { initStorage } from './utils/storage'
 import './assets/styles/theme.css'
+import { useUserStore } from './stores/user'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -17,6 +18,10 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.use(pinia)
+
+// 在路由启动前恢复登录状态，避免误判跳转
+useUserStore().initializeUser()
+
 app.use(router)
 // 配置 Element Plus，将消息提示位置下移，避免遮挡按钮
 app.use(ElementPlus, {

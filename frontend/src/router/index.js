@@ -1,9 +1,19 @@
-﻿import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import Layout from '../components/Layout.vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 
 const routes = [
+  {
+    path: '/',
+    name: 'Landing',
+    component: () => import('../pages/Landing.vue'),
+    meta: {
+      title: '心镜',
+      requiresAuth: false,
+      hideForAuth: true
+    }
+  },
   {
     path: '/login',
     name: 'Login',
@@ -15,7 +25,7 @@ const routes = [
     }
   },
   {
-    path: '/',
+    path: '/app',
     component: Layout,
     meta: { requiresAuth: true }, // 需要登录才能访问
     children: [
@@ -60,6 +70,12 @@ const routes = [
         name: 'User',
         component: () => import('../pages/User.vue'),
         meta: { title: '个人中心' }
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: () => import('../pages/Settings.vue'),
+        meta: { title: '设置' }
       },
       {
         path: 'about',
@@ -108,9 +124,9 @@ router.beforeEach(async (to, from, next) => {
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     if (!userStore.isLoggedIn) {
-      // 未登录，跳转到登录页
+      // 未登录，跳转到欢迎页
       next({
-        path: '/login',
+        path: '/',
         query: { redirect: to.fullPath }
       })
       return
@@ -120,12 +136,9 @@ router.beforeEach(async (to, from, next) => {
     try {
       await userStore.fetchUserInfo()
     } catch (error) {
-      // token无效，清除用户信息并跳转到登录页
+      // token无效，清除用户信息并跳转到欢迎页
       userStore.clearUser()
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      })
+      next('/')
       return
     }
   }
@@ -133,14 +146,14 @@ router.beforeEach(async (to, from, next) => {
   // 检查管理员权限
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
     ElMessage.error('权限不足，只有管理员可以访问此页面')
-    next('/')
+    next('/app')
     return
   }
   
-  // 检查是否已登录用户访问登录页面
+  // 检查是否已登录用户访问登录/欢迎页面
   if (to.meta.hideForAuth && userStore.isLoggedIn) {
-    // 已登录用户访问登录页，重定向到首页
-    next('/')
+    // 已登录用户访问登录页或欢迎页，重定向到应用首页
+    next('/app')
     return
   }
   

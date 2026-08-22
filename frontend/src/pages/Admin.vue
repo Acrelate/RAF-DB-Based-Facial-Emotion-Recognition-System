@@ -1,189 +1,266 @@
-﻿<template>
+<template>
   <div class="admin-view">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-left">
-          <h1>🛠️ 管理员面板</h1>
+    <div class="admin-page-header">
+      <div class="admin-header-main">
+        <div class="admin-header-icon-wrap">
+          <el-icon :size="22"><Setting /></el-icon>
+        </div>
+        <div class="admin-header-text">
+          <h1>管理员面板</h1>
           <p>系统管理和用户管理功能</p>
         </div>
-        <div class="header-right">
-          <el-tag type="danger" size="large" effect="dark">
-            <el-icon><Star /></el-icon>
-            管理员权限
-          </el-tag>
-        </div>
+      </div>
+      <div class="admin-permission-badge">
+        <el-icon :size="14"><Lock /></el-icon>
+        <span>管理员权限</span>
+      </div>
+      <div class="admin-header-deco" aria-hidden="true">
+        <span class="deco-blob deco-blob-1"></span>
+        <span class="deco-blob deco-blob-2"></span>
+        <span class="deco-leaf">🌿</span>
       </div>
     </div>
 
     <!-- 统计数据卡片 -->
-    <el-row :gutter="20" class="stats-row">
-      <!-- 系统统计 -->
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <el-card class="stat-card stat-card-primary" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-primary">
-              <el-icon :size="40" color="#ffffff"><User /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ systemStats.total_users || 0 }}</div>
-              <div class="stat-label">总用户数</div>
-            </div>
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon admin-stat-icon-blue">
+          <el-icon :size="24"><User /></el-icon>
+        </div>
+        <div class="admin-stat-body">
+          <div class="admin-stat-value">{{ systemStats.total_users || 0 }}</div>
+          <div class="admin-stat-label">总用户数</div>
+          <div class="admin-stat-trend trend-neutral">
+            <span class="trend-mark">—</span>
+            <span>无变化</span>
           </div>
-        </el-card>
-      </el-col>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <el-card class="stat-card stat-card-success" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-success">
-              <el-icon :size="40" color="#ffffff"><UserFilled /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ systemStats.active_users || 0 }}</div>
-              <div class="stat-label">活跃用户</div>
-            </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon admin-stat-icon-green">
+          <el-icon :size="24"><UserFilled /></el-icon>
+        </div>
+        <div class="admin-stat-body">
+          <div class="admin-stat-value">{{ systemStats.active_users || 0 }}</div>
+          <div class="admin-stat-label">活跃用户</div>
+          <div class="admin-stat-trend trend-active">
+            <span class="trend-mark">●</span>
+            <span>{{ activeUserRate }}% 活跃率</span>
           </div>
-        </el-card>
-      </el-col>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <el-card class="stat-card stat-card-warning" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-warning">
-              <el-icon :size="40" color="#ffffff"><Warning /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ systemStats.inactive_users || 0 }}</div>
-              <div class="stat-label">非活跃用户</div>
-            </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon admin-stat-icon-orange">
+          <el-icon :size="24"><Warning /></el-icon>
+        </div>
+        <div class="admin-stat-body">
+          <div class="admin-stat-value">{{ systemStats.inactive_users || 0 }}</div>
+          <div class="admin-stat-label">非活跃用户</div>
+          <div class="admin-stat-trend trend-neutral">
+            <span class="trend-mark">—</span>
+            <span>无变化</span>
           </div>
-        </el-card>
-      </el-col>
+        </div>
+      </div>
 
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <el-card class="stat-card stat-card-danger" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-danger">
-              <el-icon :size="40" color="#ffffff"><Star /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-value">{{ systemStats.admin_count || 0 }}</div>
-              <div class="stat-label">管理员</div>
-            </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon admin-stat-icon-purple">
+          <el-icon :size="24"><Star /></el-icon>
+        </div>
+        <div class="admin-stat-body">
+          <div class="admin-stat-value">{{ systemStats.admin_count || 0 }}</div>
+          <div class="admin-stat-label">管理员</div>
+          <div class="admin-stat-trend trend-neutral">
+            <span class="trend-mark">—</span>
+            <span>无变化</span>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </div>
 
-    <!-- 数据管理标签页 -->
-    <el-card class="data-tabs-card" shadow="hover" style="margin-top: 20px;">
-      <el-tabs v-model="activeTab" type="border-card" class="data-tabs">
+    <!-- 系统状态与数据管理 -->
+    <div class="admin-workspace">
+      <div class="system-status-bar">
+        <div class="status-item status-ok">
+          <span class="status-dot"></span>
+          <span>系统运行正常</span>
+        </div>
+        <span class="status-divider"></span>
+        <div class="status-item">
+          <el-icon class="status-icon"><Lock /></el-icon>
+          <span>API 正常</span>
+        </div>
+        <span class="status-divider"></span>
+        <div class="status-item">
+          <el-icon class="status-icon"><Coin /></el-icon>
+          <span>数据库正常</span>
+        </div>
+        <span class="status-divider"></span>
+        <div class="status-item status-storage">
+          <el-icon class="status-icon"><Monitor /></el-icon>
+          <span>存储空间 {{ storagePercent }}%</span>
+          <div class="storage-progress">
+            <div class="storage-progress-fill" :style="{ width: `${storagePercent}%` }"></div>
+          </div>
+        </div>
+        <span class="status-divider"></span>
+        <div class="status-item status-time">
+          <el-icon class="status-icon"><Clock /></el-icon>
+          <span>最后检查 {{ lastCheckTime }}</span>
+        </div>
+      </div>
+
+      <div class="admin-tabs-panel">
+        <el-tabs v-model="activeTab" class="admin-data-tabs">
         <!-- 用户管理标签页 -->
         <el-tab-pane name="users">
           <template #label>
-            <span><el-icon><User /></el-icon> 用户管理</span>
+            <span class="admin-tab-label"><el-icon><User /></el-icon>用户管理</span>
           </template>
-          
-    <!-- 用户管理 -->
-    <el-card class="users-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span>👥 用户管理</span>
-          <div style="display:flex;gap:8px">
-            <el-button type="danger" @click="batchDeleteUsers" :disabled="selectedUsers.length === 0">
-              批量删除 ({{ selectedUsers.length }})
-            </el-button>
-            <el-button type="primary" @click="openCreateDialog">
-              新增用户
-            </el-button>
-            <el-button type="primary" @click="refreshUsers" :loading="loading">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
+
+          <div class="admin-user-panel">
+            <div class="admin-panel-header">
+              <div class="admin-panel-title">
+                <span class="admin-panel-title-icon">
+                  <el-icon :size="18"><UserFilled /></el-icon>
+                </span>
+                <h3>用户管理</h3>
+              </div>
+              <div class="admin-panel-actions">
+                <button
+                  class="btn-batch-delete"
+                  type="button"
+                  :disabled="selectedUsers.length === 0"
+                  @click="batchDeleteUsers"
+                >
+                  <el-icon><Delete /></el-icon>
+                  批量删除
+                </button>
+                <button class="btn-add-user" type="button" @click="openCreateDialog">
+                  + 新增用户
+                </button>
+                <button
+                  class="btn-refresh-outline"
+                  type="button"
+                  :disabled="loading"
+                  @click="refreshUsers"
+                >
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </button>
+              </div>
+            </div>
+
+            <div class="admin-search-bar">
+              <el-input
+                v-model="userSearchText"
+                placeholder="搜索用户名、邮箱、角色..."
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </div>
+
+            <el-table
+              :data="paginatedUsers"
+              v-loading="loading"
+              class="admin-user-table"
+              @selection-change="handleUserSelectionChange"
+            >
+              <el-table-column type="selection" width="48" :selectable="canSelectUser" />
+              <el-table-column prop="id" label="ID" width="70" />
+              <el-table-column prop="username" label="用户名" width="110" />
+              <el-table-column prop="email" label="邮箱" min-width="200" />
+              <el-table-column prop="role" label="角色" width="110">
+                <template #default="{ row }">
+                  <span
+                    class="role-tag"
+                    :class="row.role === 'admin' ? 'role-tag-admin' : 'role-tag-user'"
+                  >
+                    {{ row.role === 'admin' ? '管理员' : '普通用户' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="is_active" label="状态" width="100">
+                <template #default="{ row }">
+                  <span class="status-cell" :class="row.is_active ? 'is-active' : 'is-inactive'">
+                    <span class="status-cell-dot"></span>
+                    {{ row.is_active ? '活跃' : '禁用' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="is_verified" label="验证" width="90">
+                <template #default="{ row }">
+                  <span
+                    class="verify-text"
+                    :class="row.is_verified ? 'verify-ok' : 'verify-pending'"
+                  >
+                    {{ row.is_verified ? '已验证' : '未验证' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="注册时间" width="180">
+                <template #default="{ row }">
+                  {{ formatDate(row.created_at) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="200" fixed="right">
+                <template #default="{ row }">
+                  <div class="row-actions">
+                    <button class="btn-row-edit" type="button" @click="openEditDialog(row)">编辑</button>
+                    <button
+                      class="btn-row-disable"
+                      type="button"
+                      @click="toggleUserStatus(row)"
+                      :disabled="row.id === userStore.userInfo?.id"
+                    >
+                      {{ row.is_active ? '禁用' : '启用' }}
+                    </button>
+                    <el-dropdown
+                      trigger="click"
+                      @command="(command) => handleUserRowCommand(command, row)"
+                    >
+                      <button class="btn-row-more" type="button">...</button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item
+                            command="delete"
+                            :disabled="row.role === 'admin'"
+                          >
+                            删除
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <div class="admin-table-footer">
+              <span class="table-total">共 {{ filteredUsers.length }} 条</span>
+              <el-pagination
+                v-model:current-page="userPage"
+                v-model:page-size="userPageSize"
+                :page-sizes="[10, 20, 50]"
+                :total="filteredUsers.length"
+                layout="prev, pager, next, sizes"
+                background
+                small
+              />
+            </div>
           </div>
-        </div>
-      </template>
-
-      <!-- 搜索栏 -->
-      <div class="search-bar">
-        <el-input 
-          v-model="userSearchText" 
-          placeholder="搜索用户名、邮箱、角色..." 
-          clearable
-          style="width: 300px;"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-
-      <el-table 
-        :data="filteredUsers" 
-        v-loading="loading" 
-        stripe
-        @selection-change="handleUserSelectionChange"
-      >
-        <el-table-column type="selection" width="55" :selectable="canSelectUser" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="email" label="邮箱" min-width="200" />
-        <el-table-column prop="role" label="角色" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.role === 'admin' ? 'danger' : 'primary'">
-              {{ row.role === 'admin' ? '管理员' : '普通用户' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="is_active" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.is_active ? 'success' : 'danger'">
-              {{ row.is_active ? '活跃' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="is_verified" label="验证" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.is_verified ? 'success' : 'warning'">
-              {{ row.is_verified ? '已验证' : '未验证' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="created_at" label="注册时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.created_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="260">
-          <template #default="{ row }">
-            <el-button
-              size="small"
-              :type="row.is_active ? 'danger' : 'success'"
-              @click="toggleUserStatus(row)"
-              :disabled="row.id === userStore.userInfo?.id"
-            >
-              {{ row.is_active ? '禁用' : '启用' }}
-            </el-button>
-            <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
-              @click="deleteUser(row)" 
-              :disabled="row.role === 'admin'"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
         </el-tab-pane>
 
         <!-- 预测历史记录标签页 -->
         <el-tab-pane name="histories">
           <template #label>
-            <span><el-icon><Document /></el-icon> 预测历史</span>
+            <span class="admin-tab-label"><el-icon><Document /></el-icon>预测历史</span>
           </template>
     <el-card class="histories-card users-card" shadow="hover">
       <template #header>
@@ -280,7 +357,7 @@
         <!-- 情绪日记记录标签页 -->
         <el-tab-pane name="journals">
           <template #label>
-            <span><el-icon><Notebook /></el-icon> 情绪日记</span>
+            <span class="admin-tab-label"><el-icon><Notebook /></el-icon>情绪日记</span>
           </template>
 
     <!-- 情绪日记记录 -->
@@ -356,7 +433,7 @@
         <!-- 感恩记录标签页 -->
         <el-tab-pane name="gratitudes">
           <template #label>
-            <span><el-icon><Star /></el-icon> 感恩记录</span>
+            <span class="admin-tab-label"><el-icon><Star /></el-icon>感恩记录</span>
           </template>
 
     <!-- 感恩记录 -->
@@ -428,7 +505,7 @@
         <!-- 用户情绪汇总标签页 -->
         <el-tab-pane name="summaries">
           <template #label>
-            <span><el-icon><TrendCharts /></el-icon> 情绪汇总</span>
+            <span class="admin-tab-label"><el-icon><TrendCharts /></el-icon>情绪汇总</span>
           </template>
 
     <!-- 情绪汇总记录 -->
@@ -514,7 +591,7 @@
         <!-- 健康评估记录标签页 -->
         <el-tab-pane name="assessments">
           <template #label>
-            <span><el-icon><DocumentCopy /></el-icon> 健康评估</span>
+            <span class="admin-tab-label"><el-icon><DocumentCopy /></el-icon>健康评估</span>
           </template>
 
     <!-- 健康评估记录 -->
@@ -597,7 +674,7 @@
         <!-- 视频分析结果标签页 -->
         <el-tab-pane name="videos">
           <template #label>
-            <span><el-icon><Film /></el-icon> 视频分析</span>
+            <span class="admin-tab-label"><el-icon><Film /></el-icon>视频分析</span>
           </template>
 
     <!-- 视频分析结果 -->
@@ -666,7 +743,8 @@
     </el-card>
         </el-tab-pane>
       </el-tabs>
-    </el-card>
+      </div>
+    </div>
 
     <!-- 图片预览对话框 -->
     <el-dialog
@@ -846,112 +924,110 @@
     </el-dialog>
 
     <!-- 系统设置 -->
-    <el-row :gutter="20">
-      <el-col :xs="24" :lg="12">
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>📊 系统信息</span>
+    <div class="admin-bottom-panels">
+      <div class="admin-info-panel">
+        <div class="admin-panel-head">
+          <span class="admin-panel-head-icon">
+            <el-icon :size="18"><TrendCharts /></el-icon>
+          </span>
+          <h3>系统信息</h3>
+        </div>
+        <div class="system-info-list">
+          <div class="system-info-row">
+            <div class="system-info-label">
+              <el-icon><Document /></el-icon>
+              <span>系统版本</span>
             </div>
-          </template>
-          <el-descriptions :column="1" border size="large">
-            <el-descriptions-item>
-              <template #label>
-                <div class="desc-label">
-                  <el-icon><Document /></el-icon>
-                  <span>系统版本</span>
-                </div>
-              </template>
-              <el-tag>v2.0.0</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class="desc-label">
-                  <el-icon><Document /></el-icon>
-                  <span>API版本</span>
-                </div>
-              </template>
-              <el-tag type="success">v1.0.0</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class="desc-label">
-                  <el-icon><Document /></el-icon>
-                  <span>运行时间</span>
-                </div>
-              </template>
-              <el-tag type="warning">{{ systemUptime }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template #label>
-                <div class="desc-label">
-                  <el-icon><Document /></el-icon>
-                  <span>最后更新</span>
-                </div>
-              </template>
-              {{ formatDate(new Date()) }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-      </el-col>
-
-      <el-col :xs="24" :lg="12">
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>⚙️ 快速操作</span>
-            </div>
-          </template>
-          <div class="quick-actions">
-            <div class="action-button" @click="exportSystemData">
-              <div class="action-icon action-icon-blue">
-                <el-icon :size="24"><Download /></el-icon>
-              </div>
-              <div class="action-content">
-                <div class="action-title">导出系统数据</div>
-                <div class="action-desc">导出用户和系统数据</div>
-              </div>
-            </div>
-            <div class="action-button" @click="clearSystemCache">
-              <div class="action-icon action-icon-orange">
-                <el-icon :size="24"><Delete /></el-icon>
-              </div>
-              <div class="action-content">
-                <div class="action-title">清理系统缓存</div>
-                <div class="action-desc">清除临时文件和缓存</div>
-              </div>
-            </div>
-            <div class="action-button" @click="viewSystemLogs">
-              <div class="action-icon action-icon-purple">
-                <el-icon :size="24"><Document /></el-icon>
-              </div>
-              <div class="action-content">
-                <div class="action-title">查看系统日志</div>
-                <div class="action-desc">查看系统运行日志</div>
-              </div>
-            </div>
-            <div class="action-button" @click="refreshUsers">
-              <div class="action-icon action-icon-green">
-                <el-icon :size="24"><Refresh /></el-icon>
-              </div>
-              <div class="action-content">
-                <div class="action-title">刷新用户数据</div>
-                <div class="action-desc">重新加载用户列表</div>
-              </div>
-            </div>
+            <span class="info-badge info-badge-blue">v2.0.0</span>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+          <div class="system-info-row">
+            <div class="system-info-label">
+              <el-icon><Document /></el-icon>
+              <span>API版本</span>
+            </div>
+            <span class="info-badge info-badge-green">v1.0.0</span>
+          </div>
+          <div class="system-info-row">
+            <div class="system-info-label">
+              <el-icon><Document /></el-icon>
+              <span>运行时间</span>
+            </div>
+            <span class="info-badge info-badge-orange">{{ systemUptime }}</span>
+          </div>
+          <div class="system-info-row">
+            <div class="system-info-label">
+              <el-icon><Document /></el-icon>
+              <span>最后更新</span>
+            </div>
+            <span class="info-value-text">{{ lastSystemUpdate }}</span>
+          </div>
+        </div>
+        <div class="system-status-banner">
+          <el-icon><CircleCheck /></el-icon>
+          <span>系统运行正常</span>
+        </div>
+      </div>
+
+      <div class="admin-quick-panel">
+        <div class="admin-panel-head">
+          <span class="admin-panel-head-icon">
+            <el-icon :size="18"><Setting /></el-icon>
+          </span>
+          <h3>快速操作</h3>
+        </div>
+        <div class="quick-action-list">
+          <div class="quick-action-item" @click="exportSystemData">
+            <div class="quick-action-icon quick-action-icon-blue">
+              <el-icon :size="20"><Download /></el-icon>
+            </div>
+            <div class="quick-action-content">
+              <div class="quick-action-title">导出系统数据</div>
+              <div class="quick-action-desc">导出用户和系统数据</div>
+            </div>
+            <span class="quick-action-arrow">›</span>
+          </div>
+          <div class="quick-action-item" @click="clearSystemCache">
+            <div class="quick-action-icon quick-action-icon-orange">
+              <el-icon :size="20"><Delete /></el-icon>
+            </div>
+            <div class="quick-action-content">
+              <div class="quick-action-title">清理系统缓存</div>
+              <div class="quick-action-desc">清除临时文件和缓存</div>
+            </div>
+            <span class="quick-action-arrow">›</span>
+          </div>
+          <div class="quick-action-item" @click="viewSystemLogs">
+            <div class="quick-action-icon quick-action-icon-purple">
+              <el-icon :size="20"><Document /></el-icon>
+            </div>
+            <div class="quick-action-content">
+              <div class="quick-action-title">查看系统日志</div>
+              <div class="quick-action-desc">查看系统运行日志</div>
+            </div>
+            <span class="quick-action-arrow">›</span>
+          </div>
+          <div class="quick-action-item" @click="refreshUsers(true)">
+            <div class="quick-action-icon quick-action-icon-green">
+              <el-icon :size="20"><Refresh /></el-icon>
+            </div>
+            <div class="quick-action-content">
+              <div class="quick-action-title">刷新用户数据</div>
+              <div class="quick-action-desc">重新加载用户列表</div>
+            </div>
+            <span class="quick-action-arrow">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, reactive, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import api from '../api/client'
+import api from '@/api/client'
 import {
   User,
   UserFilled,
@@ -966,7 +1042,13 @@ import {
   Notebook,
   TrendCharts,
   DocumentCopy,
-  Film
+  Film,
+  Setting,
+  Lock,
+  Coin,
+  Monitor,
+  Clock,
+  CircleCheck
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
@@ -979,6 +1061,17 @@ const activeTab = ref('users')
 const users = ref([])
 const systemStats = ref({})
 const loading = ref(false)
+const storagePercent = ref(68)
+const lastCheckTime = ref('--:--:--')
+const userPage = ref(1)
+const userPageSize = ref(10)
+
+const activeUserRate = computed(() => {
+  const total = systemStats.value.total_users || 0
+  const active = systemStats.value.active_users || 0
+  if (!total) return 0
+  return Math.round((active / total) * 100)
+})
 const histories = ref([])
 const histLoading = ref(false)
 const showCreateDialog = ref(false)
@@ -1032,9 +1125,14 @@ const selectedVideoAnalyses = ref([])
 
 // 计算属性
 const systemUptime = computed(() => {
-  // 简化的运行时间计算
   return '2天 15小时 30分钟'
 })
+
+const lastSystemUpdate = ref('')
+
+function updateLastSystemUpdate() {
+  lastSystemUpdate.value = formatDate(new Date())
+}
 
 // 过滤后的数据
 const filteredUsers = computed(() => {
@@ -1046,6 +1144,30 @@ const filteredUsers = computed(() => {
     (u.role === 'admin' ? '管理员' : '普通用户').includes(search)
   )
 })
+
+const paginatedUsers = computed(() => {
+  const start = (userPage.value - 1) * userPageSize.value
+  return filteredUsers.value.slice(start, start + userPageSize.value)
+})
+
+watch(userSearchText, () => {
+  userPage.value = 1
+})
+
+watch(userPageSize, () => {
+  userPage.value = 1
+})
+
+function updateLastCheckTime() {
+  const now = new Date()
+  lastCheckTime.value = now.toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+function handleUserRowCommand(command, row) {
+  if (command === 'delete') {
+    deleteUser(row)
+  }
+}
 
 const filteredHistories = computed(() => {
   if (!historySearchText.value) return histories.value
@@ -1110,6 +1232,7 @@ const fetchSystemStats = async () => {
   try {
     const response = await api.get('/auth/admin/system-stats')
     systemStats.value = response.data.stats
+    updateLastCheckTime()
   } catch (error) {
     console.error('获取系统统计失败:', error)
     ElMessage.error('获取系统统计失败')
@@ -1177,9 +1300,94 @@ const toggleUserStatus = async (user) => {
 }
 
 // 刷新用户列表
-const refreshUsers = () => {
+const refreshUsers = (scrollToPanel = false) => {
+  if (scrollToPanel) {
+    activeTab.value = 'users'
+  }
   fetchUsers()
   fetchSystemStats()
+  if (scrollToPanel) {
+    nextTick(() => {
+      document.querySelector('.admin-tabs-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+}
+
+function downloadJsonFile(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function sanitizeUserRecord(user) {
+  const { password, password_hash, ...safeUser } = user
+  return safeUser
+}
+
+// 导出系统数据
+const exportSystemData = async () => {
+  try {
+    if (!users.value.length) {
+      await fetchUsers()
+    }
+    if (!Object.keys(systemStats.value).length) {
+      await fetchSystemStats()
+    }
+
+    const exportPayload = {
+      exported_at: new Date().toISOString(),
+      system_stats: systemStats.value,
+      users: users.value.map(sanitizeUserRecord),
+      records_summary: {
+        prediction_histories: histories.value.length,
+        emotion_journals: journals.value.length,
+        gratitude_records: gratitudes.value.length,
+        emotion_summaries: emotionSummaries.value.length,
+        health_assessments: healthAssessments.value.length,
+        video_analyses: videoAnalyses.value.length
+      }
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    downloadJsonFile(exportPayload, `system-export-${timestamp}.json`)
+    updateLastSystemUpdate()
+    ElMessage.success('系统数据已导出')
+  } catch (error) {
+    console.error('导出系统数据失败:', error)
+    ElMessage.error('导出失败，请稍后重试')
+  }
+}
+
+// 清理系统缓存
+const clearSystemCache = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将清理浏览器中的本地缓存（日记、感恩记录等备份），不会删除服务器数据。是否继续？',
+      '清理系统缓存',
+      { type: 'warning', confirmButtonText: '清理', cancelButtonText: '取消' }
+    )
+    ;['groundingRecords', 'journals', 'gratitudes'].forEach((key) => {
+      localStorage.removeItem(key)
+    })
+    ElMessage.success('本地缓存已清理')
+  } catch {
+    // 用户取消
+  }
+}
+
+// 查看系统日志
+const viewSystemLogs = () => {
+  activeTab.value = 'histories'
+  if (!histories.value.length) {
+    fetchHistories()
+  }
+  nextTick(() => {
+    document.querySelector('.admin-tabs-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 
 const refreshHistories = () => {
@@ -1314,21 +1522,6 @@ const batchDeleteUsers = async () => {
   }
 }
 
-// 导出系统数据
-const exportSystemData = () => {
-  ElMessage.info('导出系统数据功能开发中...')
-}
-
-// 清理系统缓存
-const clearSystemCache = () => {
-  ElMessage.info('清理系统缓存功能开发中...')
-}
-
-// 查看系统日志
-const viewSystemLogs = () => {
-  ElMessage.info('查看系统日志功能开发中...')
-}
-
 // 格式化日期时间
 const formatDate = (dateString) => {
   if (!dateString) return '-'
@@ -1375,35 +1568,6 @@ const getInputTypeTag = (row) => {
   return type === 'video' ? 'warning' : 'success'
 }
 
-// 将后端保存的文件路径转为可通过代理访问的上传 URL
-const toUploadApiUrl = (filePath) => {
-  if (!filePath) return null
-  let path = String(filePath).replace(/\\/g, '/')
-
-  // 绝对路径 / 旧相对路径：截取 uploads/ 之后的部分
-  const markers = ['/data/uploads/', '/uploads/', 'data/uploads/', 'uploads/']
-  const lower = path.toLowerCase()
-  for (const marker of markers) {
-    const idx = lower.lastIndexOf(marker)
-    if (idx !== -1) {
-      path = path.slice(idx + marker.length)
-      break
-    }
-  }
-
-  // 仍是盘符绝对路径则不可用
-  if (/^[a-zA-Z]:\//.test(path) || path.startsWith('//')) {
-    return null
-  }
-
-  path = path.replace(/^\/+/, '')
-  if (!path || path.includes('..')) return null
-
-  const encoded = path.split('/').map(encodeURIComponent).join('/')
-  // 走 Vite 代理 /api → 后端，避免写死 localhost:5000
-  return `/api/uploads/${encoded}`
-}
-
 // 根据记录生成可用的预览图片地址（支持后端返回的 base64、url、文件路径字段）
 const getPreviewSrc = (row) => {
   if (!row) return null
@@ -1411,16 +1575,28 @@ const getPreviewSrc = (row) => {
   // 优先检查文件路径字段（新版：存文件路径而非 base64）
   // 视频帧优先使用 preprocessed_image_path
   if (row.preprocessed_image_path) {
-    const url = toUploadApiUrl(row.preprocessed_image_path)
-    if (url) return url
+    // 将服务器文件路径转换为可访问的 URL
+    // 移除开头的 'uploads/' 并规范化路径分隔符
+    let path = row.preprocessed_image_path.replace(/\\/g, '/')
+    // 如果路径以 uploads/ 开头，去掉它（因为 API 端点已包含）
+    if (path.startsWith('uploads/')) {
+      path = path.substring(8)
+    }
+    return `http://localhost:5000/api/uploads/${path}`
   }
   if (row.original_image_path) {
-    const url = toUploadApiUrl(row.original_image_path)
-    if (url) return url
+    let path = row.original_image_path.replace(/\\/g, '/')
+    if (path.startsWith('uploads/')) {
+      path = path.substring(8)
+    }
+    return `http://localhost:5000/api/uploads/${path}`
   }
   if (row.thumbnail_path) {
-    const url = toUploadApiUrl(row.thumbnail_path)
-    if (url) return url
+    let path = row.thumbnail_path.replace(/\\/g, '/')
+    if (path.startsWith('uploads/')) {
+      path = path.substring(8)
+    }
+    return `http://localhost:5000/api/uploads/${path}`
   }
   
   // 兼容旧版：base64 或 URL 字段
@@ -2081,7 +2257,7 @@ onMounted(async () => {
     ElMessage.error('权限不足，只有管理员可以访问此页面')
     // 延迟跳转，避免组件渲染问题
     setTimeout(() => {
-      router.push('/')
+      router.push('/app')
     }, 1000)
     return
   }
@@ -2089,6 +2265,8 @@ onMounted(async () => {
   // 为了确保历史记录能正确映射到用户名，先加载用户列表，再加载历史
   try {
     await fetchUsers()
+    updateLastCheckTime()
+    updateLastSystemUpdate()
   } catch (e) {
     // fetchUsers 内部有错误处理并会设置 loading，因此这里只捕获以保证后续继续
     console.warn('加载用户列表时发生错误:', e)
@@ -2153,6 +2331,202 @@ onMounted(async () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+/* 管理页顶部 */
+.admin-page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(241, 245, 249, 0.9);
+  box-shadow: 0 4px 24px rgba(124, 77, 255, 0.08);
+  overflow: hidden;
+}
+
+.admin-header-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-header-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, rgba(237, 233, 254, 0.45) 70%, rgba(245, 243, 255, 0.8) 100%);
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-header-text h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.35rem;
+}
+
+.admin-header-text p {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.admin-permission-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #ddd6fe;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.admin-header-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.deco-blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.45;
+}
+
+.deco-blob-1 {
+  width: 180px;
+  height: 180px;
+  right: 8%;
+  top: -40%;
+  background: radial-gradient(circle, rgba(196, 181, 253, 0.35) 0%, transparent 70%);
+}
+
+.deco-blob-2 {
+  width: 140px;
+  height: 140px;
+  right: 22%;
+  bottom: -55%;
+  background: radial-gradient(circle, rgba(221, 214, 254, 0.4) 0%, transparent 70%);
+}
+
+.deco-leaf {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 0.5rem;
+  font-size: 2.5rem;
+  opacity: 0.12;
+  transform: rotate(-15deg);
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-stat-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 2px 12px rgba(124, 77, 255, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(124, 77, 255, 0.08);
+}
+
+.admin-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.admin-stat-icon-blue {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.admin-stat-icon-green {
+  background: linear-gradient(135deg, #6ee7a0, #34d399);
+}
+
+.admin-stat-icon-orange {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.admin-stat-icon-purple {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.admin-stat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.admin-stat-label {
+  font-size: 0.88rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.45rem;
+}
+
+.admin-stat-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.trend-mark {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.trend-active {
+  color: #16a34a;
+}
+
+.trend-neutral {
+  color: #94a3b8;
 }
 
 .header-content {
@@ -2278,7 +2652,212 @@ onMounted(async () => {
   color: #303133;
 }
 
-/* 系统设置卡片 */
+/* 系统信息与快速操作 */
+.admin-bottom-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.admin-info-panel,
+.admin-quick-panel {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 1.15rem 1.25rem 0.85rem;
+}
+
+.admin-panel-head-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-panel-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.system-info-list {
+  padding: 0 1.25rem;
+}
+
+.system-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.system-info-row:last-child {
+  border-bottom: none;
+}
+
+.system-info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.system-info-label .el-icon {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.info-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.info-badge-blue {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.info-badge-green {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.info-badge-orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.info-value-text {
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.system-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.85rem 1.25rem 1.15rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: #ecfdf5;
+  color: #16a34a;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.system-status-banner .el-icon {
+  font-size: 1.1rem;
+}
+
+.quick-action-list {
+  padding: 0 1.25rem 1.15rem;
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.quick-action-item:last-child {
+  border-bottom: none;
+}
+
+.quick-action-item:hover {
+  background: #faf9ff;
+  margin: 0 -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 10px;
+}
+
+.quick-action-item:hover .quick-action-arrow {
+  color: #7c3aed;
+}
+
+.quick-action-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.quick-action-icon-blue {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.quick-action-icon-orange {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.quick-action-icon-purple {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.quick-action-icon-green {
+  background: linear-gradient(135deg, #6ee7a0, #34d399);
+}
+
+.quick-action-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-action-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.15rem;
+}
+
+.quick-action-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.quick-action-arrow {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+/* 系统设置卡片（遗留） */
 .settings-card {
   margin-bottom: 2rem;
   border-radius: 12px;
@@ -2386,6 +2965,39 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .admin-view {
     padding: 10px;
+  }
+
+  .admin-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .status-time {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .admin-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-table-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-bottom-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header-deco {
+    display: none;
   }
 
   .page-header {
@@ -2533,6 +3145,71 @@ onMounted(async () => {
 }
 
 /* 深色模式支持 */
+.dark .admin-page-header {
+  background: rgba(44, 44, 44, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .admin-header-text h1 {
+  color: #e0e0e0;
+}
+
+.dark .admin-header-text p {
+  color: #b0b0b0;
+}
+
+.dark .admin-permission-badge {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(167, 139, 250, 0.35);
+  color: #c4b5fd;
+}
+
+.dark .admin-stat-card {
+  background: rgba(44, 44, 44, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .admin-stat-value {
+  color: #e0e0e0;
+}
+
+.dark .admin-stat-label {
+  color: #b0b0b0;
+}
+
+.dark .system-status-bar,
+.dark .admin-tabs-panel {
+  background: rgba(44, 44, 44, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .admin-panel-title h3,
+.dark .status-item.status-ok {
+  color: #e0e0e0;
+}
+
+.dark .admin-user-table :deep(.el-table__header th) {
+  background: rgba(255, 255, 255, 0.04);
+  color: #b0b0b0;
+}
+
+.dark .admin-info-panel,
+.dark .admin-quick-panel {
+  background: rgba(44, 44, 44, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .admin-panel-head h3,
+.dark .quick-action-title,
+.dark .info-value-text {
+  color: #e0e0e0;
+}
+
+.dark .system-info-row,
+.dark .quick-action-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
 .dark .page-header {
   background: rgba(44, 44, 44, 0.95);
 }
@@ -2555,6 +3232,381 @@ onMounted(async () => {
 
 .dark .image-preview-container {
   background-color: #2c2c2c;
+}
+
+/* 系统状态与标签页 */
+.admin-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.system-status-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 0;
+  padding: 0.85rem 1.15rem;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 2px 12px rgba(124, 77, 255, 0.04);
+}
+
+.status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.status-item.status-ok {
+  color: #475569;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.status-icon {
+  color: #7c3aed;
+  font-size: 0.95rem;
+}
+
+.status-divider {
+  width: 1px;
+  height: 14px;
+  background: #e2e8f0;
+  margin: 0 0.5rem;
+}
+
+.status-storage {
+  gap: 0.55rem;
+}
+
+.storage-progress {
+  width: 72px;
+  height: 6px;
+  background: #eef2f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.storage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  border-radius: 999px;
+}
+
+.status-time {
+  margin-left: auto;
+}
+
+.admin-tabs-panel {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.05);
+  overflow: hidden;
+}
+
+.admin-data-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  padding: 0 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+}
+
+.admin-data-tabs :deep(.el-tabs__nav-wrap::after) {
+  display: none;
+}
+
+.admin-data-tabs :deep(.el-tabs__item) {
+  height: 52px;
+  padding: 0 1.1rem;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.admin-data-tabs :deep(.el-tabs__item.is-active) {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.admin-data-tabs :deep(.el-tabs__active-bar) {
+  background: #7c3aed;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.admin-data-tabs :deep(.el-tabs__content) {
+  padding: 0;
+}
+
+.admin-tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-user-panel {
+  padding: 1.25rem 1.35rem 1.1rem;
+}
+
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.admin-panel-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-panel-title h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.admin-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-batch-delete,
+.btn-add-user,
+.btn-refresh-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-batch-delete {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #ef4444;
+}
+
+.btn-batch-delete:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.btn-batch-delete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-add-user {
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.22);
+}
+
+.btn-add-user:hover {
+  background: #6d28d9;
+}
+
+.btn-refresh-outline {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+}
+
+.btn-refresh-outline:hover:not(:disabled) {
+  border-color: #ddd6fe;
+  color: #7c3aed;
+}
+
+.admin-search-bar {
+  margin-bottom: 1rem;
+}
+
+.admin-search-bar :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px #eef2f6 inset;
+}
+
+.admin-user-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.admin-user-table :deep(.el-table__body td) {
+  font-size: 0.88rem;
+  color: #334155;
+}
+
+.admin-user-table :deep(.el-table__row:hover > td) {
+  background: #faf9ff !important;
+}
+
+.role-tag {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.role-tag-user {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.role-tag-admin {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.status-cell-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.status-cell.is-active {
+  color: #16a34a;
+}
+
+.status-cell.is-active .status-cell-dot {
+  background: #22c55e;
+}
+
+.status-cell.is-inactive {
+  color: #ef4444;
+}
+
+.status-cell.is-inactive .status-cell-dot {
+  background: #ef4444;
+}
+
+.verify-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.verify-ok {
+  color: #16a34a;
+}
+
+.verify-pending {
+  color: #f59e0b;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-row-edit,
+.btn-row-disable,
+.btn-row-more {
+  padding: 0.28rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.btn-row-edit {
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.btn-row-edit:hover {
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.btn-row-disable {
+  border: 1px solid #fdba74;
+  color: #ea580c;
+}
+
+.btn-row-disable:hover:not(:disabled) {
+  background: #fff7ed;
+}
+
+.btn-row-disable:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-row-more {
+  border: 1px solid #e2e8f0;
+  color: #94a3b8;
+  padding: 0.28rem 0.55rem;
+  line-height: 1;
+}
+
+.btn-row-more:hover {
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.admin-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.table-total {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.admin-table-footer :deep(.el-pagination.is-background .el-pager li.is-active) {
+  background: #7c3aed;
 }
 
 /* 数据管理标签页样式 */
@@ -2590,20 +3642,33 @@ onMounted(async () => {
 /* 标签页内的卡片样式调整 */
 .data-tabs .users-card,
 .data-tabs .histories-card,
+.admin-data-tabs .histories-card,
+.admin-data-tabs .journals-card,
+.admin-data-tabs .gratitudes-card,
+.admin-data-tabs .emotion-summary-card,
+.admin-data-tabs .health-assessment-card,
+.admin-data-tabs .video-analysis-card,
 .data-tabs .emotion-summary-card,
 .data-tabs .health-assessment-card,
 .data-tabs .video-analysis-card {
-  margin-top: 0 !important;
-  border: none;
+  margin: 1rem 1.25rem 1.25rem !important;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
   box-shadow: none;
 }
 
 .data-tabs .users-card :deep(.el-card__header),
 .data-tabs .histories-card :deep(.el-card__header),
+.admin-data-tabs .histories-card :deep(.el-card__header),
+.admin-data-tabs .journals-card :deep(.el-card__header),
+.admin-data-tabs .gratitudes-card :deep(.el-card__header),
+.admin-data-tabs .emotion-summary-card :deep(.el-card__header),
+.admin-data-tabs .health-assessment-card :deep(.el-card__header),
+.admin-data-tabs .video-analysis-card :deep(.el-card__header),
 .data-tabs .emotion-summary-card :deep(.el-card__header),
 .data-tabs .health-assessment-card :deep(.el-card__header),
 .data-tabs .video-analysis-card :deep(.el-card__header) {
-  border-bottom: 2px solid #f0f0f0;
-  padding: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1rem 1.15rem;
 }
 </style>

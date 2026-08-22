@@ -2,18 +2,34 @@
   <div class="user-view">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>👤 个人中心</h1>
-      <p>管理您的个人信息和偏好设置</p>
+      <div class="header-wave header-wave-1"></div>
+      <div class="header-wave header-wave-2"></div>
+      <span class="header-spark spark-1">✦</span>
+      <span class="header-spark spark-2">✦</span>
+      <div class="header-content">
+        <div class="header-text">
+          <div class="header-title-row">
+            <span class="header-icon-badge">
+              <el-icon :size="20"><UserFilled /></el-icon>
+            </span>
+            <h1>个人中心</h1>
+          </div>
+          <p>管理您的个人信息和偏好设置</p>
+        </div>
+        <p class="header-quote">"关心自己的内心，是一件很重要的事"</p>
+      </div>
     </div>
 
-    <el-row :gutter="20">
-      <!-- 左侧：用户信息卡片 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8">
-        <el-card class="profile-card" shadow="hover">
+    <div class="user-layout">
+      <!-- 左侧：用户信息 -->
+      <aside class="user-sidebar">
+        <el-card class="profile-card user-panel" shadow="hover">
           <div class="profile-header">
-            <el-avatar :size="100" :src="userInfo.avatar" @click="viewAvatar" style="cursor: pointer;">
-              <el-icon :size="50"><user-filled /></el-icon>
-            </el-avatar>
+            <div class="avatar-wrap" @click="viewAvatar">
+              <el-avatar :size="100" :src="userInfo.avatar" class="profile-avatar">
+                <el-icon :size="44"><UserFilled /></el-icon>
+              </el-avatar>
+            </div>
             <el-upload
               :show-file-list="false"
               :before-upload="beforeAvatarUpload"
@@ -22,18 +38,18 @@
               :auto-upload="false"
             >
               <el-button class="avatar-upload" size="small" circle>
-                <el-icon><camera /></el-icon>
+                <el-icon><Camera /></el-icon>
               </el-button>
             </el-upload>
           </div>
           
           <div class="profile-info">
-            <h3>{{ userInfo.name }}</h3>
-            <p class="user-email">{{ userInfo.email }}</p>
-            <el-tag type="success">{{ userInfo.role }}</el-tag>
+            <p class="user-email">{{ displayEmail }}</p>
+            <span :class="['role-badge', { admin: isAdminUser }]">
+              <span v-if="isAdminUser" class="role-crown">👑</span>
+              {{ roleBadgeText }}
+            </span>
           </div>
-
-          <el-divider />
 
           <div class="profile-stats">
             <div class="stat-item">
@@ -45,25 +61,41 @@
               <div class="stat-label">活跃天数</div>
             </div>
             <div class="stat-item">
-              <div class="stat-value">{{ memberDays }}</div>
+              <div class="stat-value">{{ displayMemberDays }}</div>
               <div class="stat-label">会员天数</div>
             </div>
           </div>
 
-          <el-divider />
+          <nav class="profile-menu">
+            <button
+              v-for="item in profileMenuItems"
+              :key="item.key"
+              type="button"
+              class="profile-menu-item"
+              @click="handleProfileMenu(item)"
+            >
+              <span class="menu-item-left">
+                <el-icon><component :is="item.icon" /></el-icon>
+                <span>{{ item.label }}</span>
+              </span>
+              <el-icon class="menu-arrow"><ArrowRight /></el-icon>
+            </button>
+          </nav>
 
           <div class="profile-actions">
-            <el-button type="primary" @click="editProfileDialog = true" block>
+            <el-button type="primary" class="btn-edit-profile" @click="editProfileDialog = true" block>
+              <el-icon><Edit /></el-icon>
               编辑资料
             </el-button>
-            <el-button @click="changePasswordDialog = true" block>
+            <el-button class="btn-change-password" @click="changePasswordDialog = true" block>
+              <el-icon><Lock /></el-icon>
               修改密码
             </el-button>
           </div>
         </el-card>
 
         <!-- 快速操作 -->
-        <el-card class="quick-actions-card" shadow="hover">
+        <el-card class="quick-actions-card user-panel user-panel-fill" shadow="hover">
           <template #header>
             <span>⚡ 快速操作</span>
           </template>
@@ -95,16 +127,21 @@
             </el-button>
           </div>
         </el-card>
-      </el-col>
+      </aside>
 
-      <!-- 右侧：设置 -->
-      <el-col :xs="24" :sm="24" :md="16" :lg="16">
-        <!-- 成就系统 -->
-        <el-card class="achievements-card" shadow="hover">
+      <!-- 右侧：成就与统计 -->
+      <section class="user-main">
+        <el-card class="achievements-card user-panel" shadow="hover">
           <template #header>
-            <div class="card-header-with-actions">
-              <span>🏆 成就徽章</span>
-              <el-tag type="success">{{ unlockedCount }}/{{ totalAchievements }}</el-tag>
+            <div class="achievements-header">
+              <div class="achievements-title-group">
+                <span class="achievements-trophy">🏆</span>
+                <div>
+                  <div class="achievements-title">成就徽章</div>
+                  <div class="achievements-subtitle">记录您的情绪成长历程</div>
+                </div>
+              </div>
+              <span class="achievements-count">已解锁 {{ unlockedCount }}/{{ totalAchievements }}</span>
             </div>
           </template>
           <div class="achievements-grid">
@@ -114,18 +151,24 @@
               :class="['achievement-item', { unlocked: achievement.unlocked, locked: !achievement.unlocked }]"
               @click="showAchievementDetail(achievement)"
             >
+              <span v-if="achievement.unlocked" class="achievement-check">✓</span>
               <div class="achievement-icon">{{ achievement.icon }}</div>
               <div class="achievement-info">
                 <div class="achievement-name">{{ achievement.name }}</div>
                 <div class="achievement-desc">{{ achievement.desc }}</div>
-                <el-progress
-                  v-if="!achievement.unlocked"
-                  :percentage="getAchievementProgress(achievement)"
-                  :stroke-width="6"
-                  :show-text="false"
-                />
+                <template v-if="!achievement.unlocked">
+                  <div class="achievement-progress-row">
+                    <el-progress
+                      :percentage="getAchievementProgress(achievement)"
+                      :stroke-width="6"
+                      :show-text="false"
+                      class="achievement-progress-bar"
+                    />
+                    <span class="achievement-progress-text">{{ getAchievementProgressText(achievement) }}</span>
+                  </div>
+                </template>
                 <div v-else class="achievement-unlocked">
-                  ✓ 已解锁 • {{ formatDate(achievement.unlockedAt) }}
+                  ✅ 已解锁 · {{ formatDate(achievement.unlockedAt) }}
                 </div>
               </div>
             </div>
@@ -133,45 +176,39 @@
         </el-card>
 
         <!-- 使用统计 -->
-        <el-card class="stats-card" shadow="hover">
+        <el-card class="stats-card user-panel" shadow="hover">
           <template #header>
             <span>📊 使用统计</span>
           </template>
-          <el-row :gutter="20">
-            <el-col :span="8">
-              <div class="stat-box">
-                <div class="stat-box-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-                  📅
-                </div>
-                <div class="stat-box-content">
-                  <div class="stat-box-value">{{ consecutiveDays }}</div>
-                  <div class="stat-box-label">连续使用天数</div>
-                </div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-box-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                📅
               </div>
-            </el-col>
-            <el-col :span="8">
-              <div class="stat-box">
-                <div class="stat-box-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-                  ⚡
-                </div>
-                <div class="stat-box-content">
-                  <div class="stat-box-value">{{ todayCount }}</div>
-                  <div class="stat-box-label">今日识别次数</div>
-                </div>
+              <div class="stat-box-content">
+                <div class="stat-box-value">{{ consecutiveDays }}</div>
+                <div class="stat-box-label">连续使用天数</div>
               </div>
-            </el-col>
-            <el-col :span="8">
-              <div class="stat-box">
-                <div class="stat-box-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
-                  🎯
-                </div>
-                <div class="stat-box-content">
-                  <div class="stat-box-value">{{ userLevel }}</div>
-                  <div class="stat-box-label">当前等级</div>
-                </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+                ⚡
               </div>
-            </el-col>
-          </el-row>
+              <div class="stat-box-content">
+                <div class="stat-box-value">{{ todayCount }}</div>
+                <div class="stat-box-label">今日识别次数</div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+                🎯
+              </div>
+              <div class="stat-box-content">
+                <div class="stat-box-value">{{ userLevel }}</div>
+                <div class="stat-box-label">当前等级</div>
+              </div>
+            </div>
+          </div>
           <el-divider />
           <div class="level-progress">
             <div class="level-info">
@@ -190,159 +227,21 @@
           </div>
         </el-card>
 
-        <!-- 目标设定 -->
-        <el-card class="goals-card" shadow="hover">
-          <template #header>
-            <div class="card-header-with-actions">
-              <span>🎯 我的目标</span>
-              <el-button size="small" @click="addGoalDialog = true">
-                <el-icon><plus /></el-icon>
-                添加目标
-              </el-button>
-            </div>
-          </template>
-          <div class="goals-list">
-            <div v-for="goal in goals" :key="goal.id" class="goal-item">
-              <div class="goal-header">
-                <el-checkbox v-model="goal.completed" @change="toggleGoal(goal)">
-                  {{ goal.title }}
-                </el-checkbox>
-                <el-button
-                  size="small"
-                  text
-                  type="danger"
-                  @click="deleteGoal(goal.id)"
-                >
-                  <el-icon><close /></el-icon>
-                </el-button>
-              </div>
-              <div class="goal-progress">
-                <el-progress
-                  :percentage="getGoalProgress(goal)"
-                  :status="goal.completed ? 'success' : ''"
-                />
-                <span class="goal-target">{{ goal.current }}/{{ goal.target }}</span>
-              </div>
-              <div class="goal-deadline">
-                截止日期: {{ formatDate(goal.deadline) }}
-              </div>
-            </div>
-            <el-empty v-if="goals.length === 0" description="还没有设定目标，快来添加吧！" :image-size="80" />
+        <!-- 小贴士 -->
+        <div class="tip-banner user-panel">
+          <div class="tip-content">
+            <span class="tip-icon">💜</span>
+            <span class="tip-text">
+              <strong>小贴士</strong>
+              持续记录情绪，探索内心世界，你已经做得很棒了！
+            </span>
           </div>
-        </el-card>
-
-        <!-- 通知设置 -->
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <span>🔔 通知设置</span>
-          </template>
-          <el-form label-width="150px">
-            <el-form-item label="情绪提醒">
-              <el-switch v-model="settings.emotionReminder" />
-              <span class="form-item-tip">当检测到消极情绪时提醒</span>
-            </el-form-item>
-            <el-form-item label="每日总结">
-              <el-switch v-model="settings.dailySummary" />
-              <span class="form-item-tip">每天发送情绪统计摘要</span>
-            </el-form-item>
-            <el-form-item label="健康建议">
-              <el-switch v-model="settings.healthAdvice" />
-              <span class="form-item-tip">定期推送心理健康建议</span>
-            </el-form-item>
-            <el-form-item label="邮件通知">
-              <el-switch v-model="settings.emailNotification" />
-              <span class="form-item-tip">接收邮件通知</span>
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <!-- 隐私设置 -->
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <span>🔒 隐私设置</span>
-          </template>
-          <el-form label-width="150px">
-            <el-form-item label="数据收集">
-              <el-switch v-model="settings.dataCollection" />
-              <span class="form-item-tip">允许收集使用数据以改进服务</span>
-            </el-form-item>
-            <el-form-item label="保存图片">
-              <el-switch v-model="settings.saveImages" />
-              <span class="form-item-tip">保存上传的图片用于历史记录</span>
-            </el-form-item>
-            <el-form-item label="匿名分析">
-              <el-switch v-model="settings.anonymousAnalysis" />
-              <span class="form-item-tip">数据以匿名方式参与统计分析</span>
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <!-- 显示设置 -->
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <span>🎨 显示设置</span>
-          </template>
-          <el-form label-width="150px">
-            <el-form-item label="主题模式">
-              <el-radio-group v-model="settings.theme" size="large">
-                <el-radio-button label="light">浅色</el-radio-button>
-                <el-radio-button label="dark">深色</el-radio-button>
-                <el-radio-button label="auto">跟随系统</el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="语言">
-              <el-select v-model="settings.language">
-                <el-option label="简体中文" value="zh-CN" />
-                <el-option label="English" value="en-US" />
-                <el-option label="日本語" value="ja-JP" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="动画效果">
-              <el-switch v-model="settings.animations" />
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <!-- 模型偏好 -->
-        <el-card class="settings-card" shadow="hover">
-          <template #header>
-            <span>🤖 模型偏好</span>
-          </template>
-          <el-form label-width="150px">
-            <el-form-item label="默认模型">
-              <el-select v-model="settings.defaultModel">
-                <el-option label="CNN (83.77%)" value="cnn" />
-                <el-option label="VGG16 (80%)" value="vgg" />
-                <el-option label="SE-Net-81 (81%)" value="se81" />
-                <el-option label="SE-Net-83 (83%)" value="se83" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="自动人脸检测">
-              <el-switch v-model="settings.autoFaceDetect" />
-              <span class="form-item-tip">上传图片时自动进行人脸检测</span>
-            </el-form-item>
-            <el-form-item label="显示性能统计">
-              <el-switch v-model="settings.showPerformance" />
-            </el-form-item>
-            <el-form-item label="显示质量评估">
-              <el-switch v-model="settings.showQuality" />
-            </el-form-item>
-          </el-form>
-        </el-card>
-
-        <!-- 保存按钮 -->
-        <div class="save-actions">
-          <el-button type="primary" size="large" @click="saveSettings">
-            <el-icon><check /></el-icon>
-            保存设置
-          </el-button>
-          <el-button size="large" @click="resetSettings">
-            <el-icon><refresh /></el-icon>
-            恢复默认
-          </el-button>
+          <button type="button" class="tip-action" @click="goToAnalysis">
+            去数据分析 →
+          </button>
         </div>
-      </el-col>
-    </el-row>
+      </section>
+    </div>
 
     <!-- 编辑资料对话框 -->
     <el-dialog v-model="editProfileDialog" title="编辑资料" width="500px">
@@ -385,38 +284,6 @@
       <template #footer>
         <el-button @click="changePasswordDialog = false">取消</el-button>
         <el-button type="primary" @click="changePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 添加目标对话框 -->
-    <el-dialog v-model="addGoalDialog" title="添加目标" width="500px">
-      <el-form :model="newGoal" label-width="100px">
-        <el-form-item label="目标标题">
-          <el-input v-model="newGoal.title" placeholder="例如：每周识别5次情绪" />
-        </el-form-item>
-        <el-form-item label="目标类型">
-          <el-select v-model="newGoal.type" style="width: 100%">
-            <el-option label="识别次数" value="count" />
-            <el-option label="连续天数" value="days" />
-            <el-option label="积极情绪占比" value="positive" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="目标数值">
-          <el-input-number v-model="newGoal.target" :min="1" :max="365" />
-        </el-form-item>
-        <el-form-item label="截止日期">
-          <el-date-picker
-            v-model="newGoal.deadline"
-            type="date"
-            placeholder="选择日期"
-            style="width: 100%"
-            :disabledDate="(time) => time.getTime() < Date.now()"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="addGoalDialog = false">取消</el-button>
-        <el-button type="primary" @click="addGoal">添加</el-button>
       </template>
     </el-dialog>
 
@@ -503,26 +370,29 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useEmotionStore } from '../stores/emotion'
 import { useVideoStore } from '../stores/video'
+import { useUserStore } from '../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   UserFilled,
   Camera,
   Download,
   Delete,
-  Folder,
-  Check,
-  Refresh,
-  Plus,
-  Close,
   Upload,
   UploadFilled,
-  InfoFilled
+  InfoFilled,
+  Edit,
+  Lock,
+  ArrowRight,
+  Setting
 } from '@element-plus/icons-vue'
 
 const emotionStore = useEmotionStore()
 const videoStore = useVideoStore()
+const userStore = useUserStore()
+const router = useRouter()
 
 // 用于防止初始化时触发 watch 保存
 const isInitialized = ref(false)
@@ -586,54 +456,59 @@ const activeDays = computed(() => {
 
 // 计算会员天数
 const memberDays = computed(() => {
+  const join = userInfo.value.joinDate ? new Date(userInfo.value.joinDate) : null
+  if (!join || Number.isNaN(join.getTime())) return null
   const now = new Date()
-  const join = new Date(userInfo.value.joinDate)
   const diff = now - join
-  return Math.floor(diff / (1000 * 60 * 60 * 24))
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  return days >= 0 ? days : null
 })
 
-// 从 localStorage 加载设置，如果没有则使用默认值
-const loadSettings = () => {
-  const saved = localStorage.getItem('userSettings')
-  if (saved) {
-    try {
-      return JSON.parse(saved)
-    } catch (e) {
-      console.warn('解析设置失败，使用默认值')
-    }
+const displayMemberDays = computed(() => {
+  const days = memberDays.value
+  return days === null ? '—' : days
+})
+
+const displayEmail = computed(() => {
+  return userStore.userInfo?.email || userInfo.value.email
+})
+
+const isAdminUser = computed(() => {
+  return userStore.isAdmin || userInfo.value.role === '管理员' || userInfo.value.role === 'admin'
+})
+
+const roleBadgeText = computed(() => {
+  if (isAdminUser.value) {
+    const name = userStore.userInfo?.username || userInfo.value.name || 'admin'
+    return `${name} 管理员`
   }
-  return {
-    // 通知设置
-    emotionReminder: true,
-    dailySummary: false,
-    healthAdvice: true,
-    emailNotification: false,
-    
-    // 隐私设置
-    dataCollection: true,
-    saveImages: true,
-    anonymousAnalysis: true,
-    
-    // 显示设置
-    theme: 'light',
-    language: 'zh-CN',
-    animations: true,
-    
-    // 模型偏好
-    defaultModel: 'cnn',
-    autoFaceDetect: true,
-    showPerformance: true,
-    showQuality: true
+  return userInfo.value.role || '普通用户'
+})
+
+const profileMenuItems = [
+  { key: 'profile', label: '个人信息', icon: UserFilled, action: 'dialog', target: 'profile' },
+  { key: 'security', label: '账户安全', icon: Lock, action: 'dialog', target: 'password' },
+  { key: 'settings', label: '设置', icon: Setting, action: 'route', target: '/app/settings' }
+]
+
+function handleProfileMenu(item) {
+  if (item.action === 'dialog') {
+    if (item.target === 'profile') editProfileDialog.value = true
+    if (item.target === 'password') changePasswordDialog.value = true
+    return
+  }
+  if (item.action === 'route') {
+    router.push(item.target)
   }
 }
 
-// 设置
-const settings = ref(loadSettings())
+function goToAnalysis() {
+  router.push('/app/data-analysis')
+}
 
 // 对话框
 const editProfileDialog = ref(false)
 const changePasswordDialog = ref(false)
-const addGoalDialog = ref(false)
 const achievementDetailDialog = ref(false)
 const avatarCropDialog = ref(false)
 const selectedAchievement = ref(null)
@@ -809,248 +684,6 @@ const todayCount = computed(() => {
   }).length
 })
 
-// 从 localStorage 加载目标
-const loadGoals = () => {
-  const saved = localStorage.getItem('goals')
-  if (saved) {
-    try {
-      return JSON.parse(saved)
-    } catch (e) {
-      console.warn('解析目标失败，使用默认值')
-    }
-  }
-  return []
-}
-
-// 目标系统
-const goals = ref(loadGoals())
-
-const newGoal = ref({
-  title: '',
-  type: 'count',
-  target: 10,
-  current: 0,
-  deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  completed: false
-})
-
-// 保存设置 - 优化版本，避免UI阻塞
-function saveSettings() {
-  try {
-    // 异步保存设置，避免阻塞UI
-    setTimeout(() => {
-      localStorage.setItem('userSettings', JSON.stringify(settings.value))
-    }, 0)
-    
-    // 应用各种设置
-    // 注意：applyTheme已经有防抖机制，所以这里直接调用没问题
-    applyTheme(settings.value.theme)
-    applyAnimations(settings.value.animations)
-    applyLanguage(settings.value.language)
-    
-    // 使用setTimeout确保消息在UI更新后显示
-    setTimeout(() => {
-      ElMessage.success('设置已保存')
-    }, 0)
-  } catch (error) {
-    console.error('保存设置时出错:', error)
-    ElMessage.error('保存设置失败，请重试')
-  }
-}
-
-// 保存主题变化监听器的引用，避免重复添加
-let themeChangeListener = null
-
-// 应用主题设置 - 优化版本，避免频繁DOM操作
-function applyTheme(theme) {
-  try {
-    // 使用防抖技术，避免短时间内多次调用
-    if (window._themeTimeout) {
-      clearTimeout(window._themeTimeout)
-    }
-    
-    window._themeTimeout = setTimeout(() => {
-      // 移除之前可能存在的监听器，防止内存泄漏
-      if (themeChangeListener) {
-        window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', themeChangeListener)
-        themeChangeListener = null
-      }
-      
-      // 仅当实际需要改变主题时才执行DOM操作
-      const currentTheme = settings.value.theme
-      let shouldBeDark = false
-      
-      if (currentTheme === 'auto') {
-        shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        
-        // 创建并添加新的监听器
-        themeChangeListener = (e) => {
-          // 只有在当前主题仍然是auto时才响应系统变化
-          if (settings.value.theme === 'auto') {
-            document.documentElement.classList.toggle('dark', e.matches)
-          }
-        }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeChangeListener)
-      } else if (currentTheme === 'dark') {
-        shouldBeDark = true
-      }
-      
-      // 批量执行DOM操作
-      if (shouldBeDark) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-      
-      // 异步保存设置，避免阻塞UI
-      setTimeout(() => {
-        localStorage.setItem('theme', currentTheme)
-      }, 0)
-    }, 100) // 100ms的防抖延迟
-  } catch (error) {
-    console.error('应用主题时出错:', error)
-  }
-}
-
-// 应用动画设置
-function applyAnimations(enable) {
-  if (enable) {
-    document.documentElement.classList.remove('no-animations')
-    // 添加动画类
-    document.body.classList.add('animate-fade')
-    // 为所有卡片添加动画
-    document.querySelectorAll('.el-card').forEach(card => {
-      card.classList.add('card-hover-animation')
-    })
-  } else {
-    document.documentElement.classList.add('no-animations')
-    document.body.classList.remove('animate-fade')
-    document.querySelectorAll('.el-card').forEach(card => {
-      card.classList.remove('card-hover-animation')
-    })
-  }
-  localStorage.setItem('animations', enable.toString())
-}
-
-// 应用语言设置
-function applyLanguage(lang) {
-  document.documentElement.lang = lang
-  
-  // 更新界面语言显示
-  updateInterfaceLanguage(lang)
-  
-  localStorage.setItem('language', lang)
-}
-
-// 更新界面语言
-function updateInterfaceLanguage(lang) {
-  // 简单的语言映射示例
-  const translations = {
-    'zh-CN': {
-      themeOptions: {
-        light: '浅色',
-        dark: '深色',
-        auto: '跟随系统'
-      },
-      emotionTypes: {
-        happy: '高兴',
-        sad: '悲伤',
-        anger: '生气',
-        surprised: '惊讶',
-        fear: '害怕',
-        disgust: '厌恶',
-        normal: '平静'
-      },
-      settings: {
-        display: '显示设置',
-        theme: '主题模式',
-        language: '语言',
-        animations: '动画效果'
-      }
-    },
-    'en-US': {
-      themeOptions: {
-        light: 'Light',
-        dark: 'Dark',
-        auto: 'Auto'
-      },
-      emotionTypes: {
-        happy: 'Happy',
-        sad: 'Sad',
-        anger: 'Anger',
-        surprised: 'Surprised',
-        fear: 'Fear',
-        disgust: 'Disgust',
-        normal: 'Neutral'
-      },
-      settings: {
-        display: 'Display Settings',
-        theme: 'Theme Mode',
-        language: 'Language',
-        animations: 'Animations'
-      }
-    },
-    'ja-JP': {
-      themeOptions: {
-        light: 'ライト',
-        dark: 'ダーク',
-        auto: '自動'
-      },
-      emotionTypes: {
-        happy: '幸せ',
-        sad: '悲しい',
-        anger: '怒り',
-        surprised: '驚いた',
-        fear: '恐れ',
-        disgust: '嫌悪',
-        normal: '普通'
-      },
-      settings: {
-        display: '表示設定',
-        theme: 'テーマモード',
-        language: '言語',
-        animations: 'アニメーション効果'
-      }
-    }
-  }
-  
-  // 存储当前语言包供其他组件使用
-  localStorage.setItem('currentTranslations', JSON.stringify(translations[lang]))
-  
-  // 应用当前语言到页面元素（示例）
-  document.querySelectorAll('[data-lang-key]').forEach(el => {
-    const key = el.getAttribute('data-lang-key')
-    // 这里可以实现更复杂的翻译逻辑
-  })
-}
-
-// 恢复默认设置
-function resetSettings() {
-  ElMessageBox.confirm('确定要恢复默认设置吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    settings.value = {
-      emotionReminder: true,
-      dailySummary: false,
-      healthAdvice: true,
-      emailNotification: false,
-      dataCollection: true,
-      saveImages: true,
-      anonymousAnalysis: true,
-      theme: 'light',
-      language: 'zh-CN',
-      animations: true,
-      defaultModel: 'cnn',
-      autoFaceDetect: true,
-      showPerformance: true,
-      showQuality: true
-    }
-    saveSettings()
-  }).catch(() => {})
-}
-
 // 保存资料
 function saveProfile() {
   console.log('💾 手动保存用户资料:', userInfo.value)
@@ -1094,15 +727,13 @@ function changePassword() {
 }
 
 // 成就系统相关函数
-function getAchievementProgress(achievement) {
-  if (achievement.unlocked) return 100
-  
+function getAchievementCurrentValue(achievement) {
   const req = achievement.requirement
   let current = 0
-  
+
   switch (req.type) {
     case 'count':
-      current = emotionStore.predictions.length
+      current = totalRecognitions.value
       break
     case 'consecutive':
       current = consecutiveDays.value
@@ -1117,7 +748,20 @@ function getAchievementProgress(achievement) {
       current = activeDays.value
       break
   }
+
+  return Math.min(current, req.value)
+}
+
+function getAchievementProgressText(achievement) {
+  const req = achievement.requirement
+  return `${getAchievementCurrentValue(achievement)}/${req.value}`
+}
+
+function getAchievementProgress(achievement) {
+  if (achievement.unlocked) return 100
   
+  const req = achievement.requirement
+  const current = getAchievementCurrentValue(achievement)
   return Math.min(100, Math.round((current / req.value) * 100))
 }
 
@@ -1153,76 +797,6 @@ function saveAchievements() {
 function getLevelColor() {
   const colors = ['#67c23a', '#409eff', '#e6a23c', '#f56c6c', '#909399']
   return colors[(userLevel.value - 1) % colors.length]
-}
-
-// 目标相关函数
-function addGoal() {
-  if (!newGoal.value.title) {
-    ElMessage.warning('请输入目标标题')
-    return
-  }
-  
-  const goal = {
-    id: Date.now(),
-    ...newGoal.value,
-    current: getCurrentGoalValue(newGoal.value.type),
-    createdAt: new Date()
-  }
-  
-  goals.value.push(goal)
-  saveGoals()
-  addGoalDialog.value = false
-  ElMessage.success('目标添加成功')
-  
-  // 重置表单
-  newGoal.value = {
-    title: '',
-    type: 'count',
-    target: 10,
-    current: 0,
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    completed: false
-  }
-}
-
-function getCurrentGoalValue(type) {
-  switch (type) {
-    case 'count':
-      return emotionStore.predictions.length
-    case 'days':
-      return consecutiveDays.value
-    case 'positive':
-      const positiveCount = emotionStore.predictions.filter(
-        p => p.emotion === 'happy' || p.emotion === 'normal'
-      ).length
-      return Math.round((positiveCount / emotionStore.predictions.length) * 100) || 0
-    default:
-      return 0
-  }
-}
-
-function getGoalProgress(goal) {
-  const current = getCurrentGoalValue(goal.type)
-  return Math.min(100, Math.round((current / goal.target) * 100))
-}
-
-function toggleGoal(goal) {
-  if (goal.completed) {
-    ElMessage.success('🎉 目标完成！')
-    experiencePoints.value += 50
-    saveAchievements()
-  }
-  saveGoals()
-}
-
-function deleteGoal(id) {
-  goals.value = goals.value.filter(g => g.id !== id)
-  saveGoals()
-  ElMessage.success('目标已删除')
-}
-
-function saveGoals() {
-  localStorage.setItem('goals', JSON.stringify(goals.value))
 }
 
 // 日期格式化
@@ -1424,7 +998,6 @@ function handleImportData(file) {
         
         // 导入设置
         if (data.settings) {
-          settings.value = data.settings
           localStorage.setItem('userSettings', JSON.stringify(data.settings))
         }
         
@@ -1453,12 +1026,6 @@ function handleImportData(file) {
         if (data.achievements) {
           achievements.value = data.achievements
           localStorage.setItem('achievements', JSON.stringify(data.achievements))
-        }
-        
-        // 导入目标
-        if (data.goals) {
-          goals.value = data.goals
-          localStorage.setItem('goals', JSON.stringify(data.goals))
         }
         
         // 导入经验值
@@ -1514,11 +1081,10 @@ function exportAllData() {
   
   const data = {
     userInfo: userInfo.value,
-    settings: settings.value,
+    settings: JSON.parse(localStorage.getItem('userSettings') || '{}'),
     predictions: emotionStore.predictions,
     videoHistory: videoStore.videoHistory,
     achievements: achievements.value,
-    goals: goals.value,
     experiencePoints: experiencePoints.value,
     exportCount: exportCount.value,
     gratitudes: JSON.parse(localStorage.getItem('gratitudes') || '[]'),
@@ -1574,28 +1140,8 @@ watch(() => videoStore.videoHistory.length, () => {
   checkAndUnlockAchievements()
 }, { immediate: false })
 
-// 监听主题设置变化，确保主题状态一致
-watch(() => settings.value.theme, (newTheme) => {
-  // 当主题设置变化时，立即应用新主题
-  applyTheme(newTheme)
-})
-
 // 创建节流保存函数，避免频繁写入 localStorage
 let userInfoSaveTimer = null
-let settingsSaveTimer = null
-
-// 使用 flush: 'post' 确保在 DOM 更新后才保存，避免初始化时的不必要保存
-// 监听设置变化，自动保存（节流500ms）
-watch(settings, (newSettings) => {
-  if (!isInitialized.value) return
-  if (settingsSaveTimer) clearTimeout(settingsSaveTimer)
-  settingsSaveTimer = setTimeout(() => {
-    console.log('💾 自动保存设置')
-    localStorage.setItem('userSettings', JSON.stringify(newSettings))
-  }, 500)
-}, { deep: true })
-
-// 监听用户信息变化，自动保存（节流500ms）
 watch(userInfo, (newUserInfo) => {
   if (!isInitialized.value) return
   if (userInfoSaveTimer) clearTimeout(userInfoSaveTimer)
@@ -1605,18 +1151,7 @@ watch(userInfo, (newUserInfo) => {
   }, 500)
 }, { deep: true })
 
-let goalsSaveTimer = null
 let achievementsSaveTimer = null
-
-// 监听目标变化，自动保存（节流500ms）
-watch(goals, (newGoals) => {
-  if (!isInitialized.value) return
-  if (goalsSaveTimer) clearTimeout(goalsSaveTimer)
-  goalsSaveTimer = setTimeout(() => {
-    console.log('💾 自动保存目标')
-    localStorage.setItem('goals', JSON.stringify(newGoals))
-  }, 500)
-}, { deep: true })
 
 // 监听成就变化，自动保存（节流500ms）
 watch(achievements, (newAchievements) => {
@@ -1646,13 +1181,22 @@ onMounted(() => {
   try {
     console.log('🚀 个人中心初始化...')
     console.log('📦 加载的用户信息:', userInfo.value)
+
+    if (userStore.userInfo) {
+      if (userStore.userInfo.email) userInfo.value.email = userStore.userInfo.email
+      if (userStore.userInfo.username) userInfo.value.name = userStore.userInfo.username
+      if (userStore.userInfo.role) {
+        userInfo.value.role = userStore.userInfo.role === 'admin' ? '管理员' : '普通用户'
+      }
+      if (userStore.userInfo.created_at && !userInfo.value.joinDate) {
+        userInfo.value.joinDate = new Date(userStore.userInfo.created_at)
+      }
+    }
     
     // 添加窗口关闭前的保存处理
     const handleBeforeUnload = () => {
       console.log('🔄 窗口关闭前保存所有数据...')
       localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
-      localStorage.setItem('userSettings', JSON.stringify(settings.value))
-      localStorage.setItem('goals', JSON.stringify(goals.value))
       localStorage.setItem('achievements', JSON.stringify(achievements.value))
       localStorage.setItem('experiencePoints', experiencePoints.value.toString())
       localStorage.setItem('exportCount', exportCount.value.toString())
@@ -1660,17 +1204,9 @@ onMounted(() => {
     
     window.addEventListener('beforeunload', handleBeforeUnload)
     
-    // 数据已在初始化时加载，这里只需要应用设置
-    // 延迟应用设置，确保DOM已渲染完成
     setTimeout(() => {
-      applyTheme(settings.value.theme)
-      applyAnimations(settings.value.animations)
-      applyLanguage(settings.value.language)
-      
-      // 异步检查成就，避免阻塞UI
       setTimeout(checkAndUnlockAchievements, 100)
       
-      // 标记初始化完成，开始监听数据变化
       setTimeout(() => {
         isInitialized.value = true
         console.log('✅ 初始化完成，开始监听数据变化')
@@ -1692,18 +1228,6 @@ onBeforeUnmount(() => {
     console.log('💾 卸载时保存用户信息')
   }
   
-  if (settingsSaveTimer) {
-    clearTimeout(settingsSaveTimer)
-    localStorage.setItem('userSettings', JSON.stringify(settings.value))
-    console.log('💾 卸载时保存设置')
-  }
-  
-  if (goalsSaveTimer) {
-    clearTimeout(goalsSaveTimer)
-    localStorage.setItem('goals', JSON.stringify(goals.value))
-    console.log('💾 卸载时保存目标')
-  }
-  
   if (achievementsSaveTimer) {
     clearTimeout(achievementsSaveTimer)
     localStorage.setItem('achievements', JSON.stringify(achievements.value))
@@ -1716,99 +1240,320 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .user-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  --panel-gap: 1.25rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+}
+
+.user-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+  gap: var(--panel-gap);
+  align-items: stretch;
+}
+
+.user-sidebar,
+.user-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+  min-width: 0;
+}
+
+.user-panel {
+  margin-bottom: 0 !important;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
+}
+
+.user-panel :deep(.el-card__header) {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.user-panel :deep(.el-card__body) {
+  padding: 1.25rem;
+}
+
+.user-panel-fill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-panel-fill :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-main .tip-banner {
+  margin-top: auto;
 }
 
 .page-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 45%, #e0e7ff 100%);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(124, 77, 255, 0.1);
+  border: 1px solid rgba(196, 181, 253, 0.35);
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  color: #303133;
-  margin-bottom: 0.5rem;
+.header-wave {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.page-header p {
-  color: #606266;
-  font-size: 1.1rem;
+.header-wave-1 {
+  width: 180px;
+  height: 180px;
+  top: -60px;
+  right: 18%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.25) 0%, transparent 70%);
+}
+
+.header-wave-2 {
+  width: 120px;
+  height: 120px;
+  bottom: -40px;
+  left: 35%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.2) 0%, transparent 70%);
+}
+
+.header-spark {
+  position: absolute;
+  color: rgba(124, 77, 255, 0.35);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.spark-1 { top: 1.2rem; right: 28%; }
+.spark-2 { bottom: 1rem; right: 12%; }
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.header-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-text h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.header-text p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.header-quote {
+  margin: 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #6366f1;
+  max-width: 280px;
+  text-align: right;
+  line-height: 1.5;
 }
 
 .profile-card {
-  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.profile-card :deep(.el-card__body) {
+  padding: 1.5rem 1.25rem;
 }
 
 .profile-header {
   text-align: center;
   position: relative;
-  padding: 1rem 0;
+  padding: 0.5rem 0 1rem;
+}
+
+.avatar-wrap {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.profile-avatar {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%) !important;
+  color: #fff;
 }
 
 .avatar-upload {
   position: absolute;
-  bottom: 1rem;
-  right: calc(50% - 50px);
-  transform: translateX(50%);
+  bottom: 0.75rem;
+  right: calc(50% - 58px);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .profile-info {
   text-align: center;
-  margin: 1.5rem 0;
-}
-
-.profile-info h3 {
-  font-size: 1.5rem;
-  color: #303133;
-  margin-bottom: 0.5rem;
+  margin: 0.75rem 0 1.25rem;
 }
 
 .user-email {
-  color: #909399;
-  margin-bottom: 0.75rem;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.65rem;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.role-badge.admin {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.role-crown {
+  font-size: 0.75rem;
 }
 
 .profile-stats {
   display: flex;
   justify-content: space-around;
-  padding: 1rem 0;
+  padding: 0.85rem 0.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(199, 210, 254, 0.5);
 }
 
 .stat-item {
   text-align: center;
+  flex: 1;
 }
 
 .stat-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #667eea;
-  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #6366f1;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
 }
 
 .stat-label {
-  color: #909399;
-  font-size: 0.875rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.profile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #475569;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-menu-item:hover {
+  background: #f8fafc;
+  color: #6366f1;
+}
+
+.menu-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.menu-arrow {
+  color: #cbd5e1;
+  font-size: 0.85rem;
 }
 
 .profile-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
-.quick-actions-card {
-  margin-bottom: 1.5rem;
+.btn-edit-profile {
+  background: linear-gradient(135deg, #7c77ff 0%, #6366f1 100%) !important;
+  border: none !important;
+  height: 42px;
+  font-weight: 500;
+}
+
+.btn-edit-profile :deep(.el-button__content) {
+  gap: 0.4rem;
+}
+
+.btn-change-password {
+  height: 42px;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+  font-weight: 500;
+}
+
+.btn-change-password :deep(.el-button__content) {
+  gap: 0.4rem;
 }
 
 .quick-actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 1;
 }
 
 .upload-full-width {
@@ -1882,8 +1627,52 @@ onBeforeUnmount(() => {
 }
 
 /* 成就系统样式 */
-.achievements-card {
-  margin-bottom: 2rem;
+.achievements-card :deep(.el-card__header) {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.achievements-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 1rem;
+}
+
+.achievements-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.achievements-trophy {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.achievements-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.achievements-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+.achievements-count {
+  flex-shrink: 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
 }
 
 .card-header-with-actions {
@@ -1895,66 +1684,116 @@ onBeforeUnmount(() => {
 
 .achievements-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+  align-items: stretch;
 }
 
 .achievement-item {
+  position: relative;
   display: flex;
-  gap: 1rem;
+  gap: 0.85rem;
   padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
 }
 
 .achievement-item.unlocked {
-  border-color: #67c23a;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
 }
 
 .achievement-item.locked {
-  opacity: 0.6;
-  background: #f5f7fa;
+  background: #fafbfc;
 }
 
 .achievement-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+}
+
+.achievement-check {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
 }
 
 .achievement-icon {
-  font-size: 3rem;
+  font-size: 2rem;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .achievement-info {
   flex: 1;
+  min-width: 0;
 }
 
 .achievement-name {
-  font-weight: bold;
-  font-size: 1.1rem;
-  margin-bottom: 0.25rem;
-  color: #303133;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+  color: #1e293b;
 }
 
 .achievement-desc {
-  font-size: 0.9rem;
-  color: #606266;
-  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.55rem;
+  line-height: 1.4;
+}
+
+.achievement-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.achievement-progress-bar {
+  flex: 1;
+}
+
+.achievement-progress-bar :deep(.el-progress-bar__outer) {
+  background: #e2e8f0;
+}
+
+.achievement-progress-bar :deep(.el-progress-bar__inner) {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+}
+
+.achievement-progress-text {
+  font-size: 0.75rem;
+  color: #6366f1;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .achievement-unlocked {
-  font-size: 0.85rem;
-  color: #67c23a;
+  font-size: 0.78rem;
+  color: #059669;
   font-weight: 500;
 }
 
 /* 使用统计样式 */
-.stats-card {
-  margin-bottom: 2rem;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
 }
 
 .stat-box {
@@ -1962,9 +1801,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  height: 100%;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #eef2f7;
+  box-shadow: none;
 }
 
 .stat-box-icon {
@@ -2005,51 +1846,62 @@ onBeforeUnmount(() => {
   color: #606266;
 }
 
-/* 目标系统样式 */
-.goals-card {
-  margin-bottom: 2rem;
-}
-
-.goals-list {
+.tip-banner {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.goal-item {
-  padding: 1rem;
-  background: #f5f7fa;
-  border-radius: 8px;
-  border: 1px solid #e4e7ed;
-}
-
-.goal-header {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  padding: 1rem 1.25rem;
+  min-height: 56px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(196, 181, 253, 0.45);
+  box-shadow: 0 4px 20px rgba(124, 77, 255, 0.06);
 }
 
-.goal-progress {
+.tip-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.goal-progress .el-progress {
+  gap: 0.6rem;
   flex: 1;
+  min-width: 0;
 }
 
-.goal-target {
-  font-size: 0.9rem;
-  color: #606266;
-  white-space: nowrap;
+.tip-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
-.goal-deadline {
+.tip-text {
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.tip-text strong {
+  color: #6366f1;
+  margin-right: 0.35rem;
+}
+
+.tip-action {
+  flex-shrink: 0;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(196, 181, 253, 0.6);
+  border-radius: 999px;
+  background: #fff;
+  color: #6366f1;
   font-size: 0.85rem;
-  color: #909399;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tip-action:hover {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
 }
 
 /* 成就详情对话框样式 */
@@ -2179,14 +2031,41 @@ onBeforeUnmount(() => {
   padding: 1rem 0;
 }
 
+@media (max-width: 992px) {
+  .user-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .user-main .tip-banner {
+    margin-top: 0;
+  }
+
+  .user-panel-fill {
+    flex: none;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .page-header h1 {
-    font-size: 1.8rem;
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-quote {
+    text-align: left;
+    max-width: none;
+  }
+
+  .header-text h1 {
+    font-size: 1.25rem;
   }
   
   .profile-stats {
-    flex-direction: column;
-    gap: 1rem;
+    flex-direction: row;
   }
   
   .save-actions {
@@ -2195,6 +2074,16 @@ onBeforeUnmount(() => {
   
   .achievements-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tip-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tip-action {
+    width: 100%;
+    text-align: center;
   }
   
   .stat-box {

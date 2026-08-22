@@ -309,4 +309,3 @@ def _align_by_five_points(image_rgb: Image.Image,
         return Image.fromarray(aligned)
     except Exception:
         return None
-

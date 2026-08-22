@@ -168,4 +168,3 @@ if __name__ == '__main__':
     print("质量评估结果:")
     for key, value in result.items():
         print(f"  {key}: {value}")
-

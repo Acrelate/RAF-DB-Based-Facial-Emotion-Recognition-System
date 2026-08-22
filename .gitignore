@@ -32,8 +32,10 @@ ENV/
 backend/logs/
 backend/instance/
 backend/uploads/
-backend/data/uploads/
-backend/data/logs/
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+backend/data/logs/*
+!backend/data/logs/.gitkeep
 backend/data/db/*.db
 backend/data/db/*.sqlite*
 log/
