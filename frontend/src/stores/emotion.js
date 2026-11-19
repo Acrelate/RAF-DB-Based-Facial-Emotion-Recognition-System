@@ -1,8 +1,7 @@
 ﻿import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../api/client'
-import storageManager from '../utils/storage'
-import { 
+import {
   saveImagePredictions, 
   loadImagePredictions, 
   clearImagePredictions,
@@ -16,11 +15,18 @@ export const useEmotionStore = defineStore('emotion', () => {
   const predictions = ref([])
   const isLoading = ref(false)
   const currentPrediction = ref(null) // 当前正在查看的预测结果
+  // 服务端历史（/api/histories），供历史/分析页共用
+  const serverHistories = ref([])
+  const serverHistoriesTotal = ref(0)
+  const serverHistoriesLoading = ref(false)
+  const serverHistoriesError = ref(false)
 
-  // 获取当前用户名
+  // 获取当前用户名（与 video store 保持一致，直接读 localStorage 的登录态。
+  // 此前经由 IndexedDB 的 storageManager 读取，登录/登出不会同步过去，
+  // 会导致预测记录串号或"丢失"）
   async function getCurrentUsername() {
     try {
-      const userInfo = await storageManager.getItem('userInfo')
+      const userInfo = localStorage.getItem('userInfo')
       if (userInfo) {
         const user = JSON.parse(userInfo)
         return user.username || 'guest'
@@ -97,7 +103,7 @@ export const useEmotionStore = defineStore('emotion', () => {
     try {
       const response = await api.get('/health')
       isHealthy.value = response.data.status === 'ok'
-      availableModels.value = response.data.available_models
+      availableModels.value = response.data.available_models || []
       return true
     } catch (error) {
       console.error('后端服务连接失败:', error)
@@ -114,6 +120,42 @@ export const useEmotionStore = defineStore('emotion', () => {
     } catch (error) {
       console.error('获取模型列表失败:', error)
     }
+  }
+
+  // 从服务端拉取识别历史（多页，带兜底）
+  async function fetchServerHistories(perPage = 100, maxPages = 3) {
+    serverHistoriesLoading.value = true
+    serverHistoriesError.value = false
+    try {
+      const response = await api.get('/histories', { params: { page: 1, per_page: perPage } })
+      const total = response.data.total || 0
+      const all = [...(response.data.histories || [])]
+      const totalPages = Math.min(Math.ceil(total / perPage) || 1, maxPages)
+      for (let p = 2; p <= totalPages; p++) {
+        try {
+          const next = await api.get('/histories', { params: { page: p, per_page: perPage } })
+          all.push(...(next.data.histories || []))
+        } catch (error) {
+          break
+        }
+      }
+      serverHistories.value = all
+      serverHistoriesTotal.value = total
+      return all
+    } catch (error) {
+      console.error('获取服务端历史失败:', error)
+      serverHistoriesError.value = true
+      return []
+    } finally {
+      serverHistoriesLoading.value = false
+    }
+  }
+
+  // 删除服务端历史记录（仅本人）
+  async function deleteServerHistory(serverId) {
+    await api.delete(`/histories/${serverId}`)
+    serverHistories.value = serverHistories.value.filter((h) => h.id !== serverId)
+    serverHistoriesTotal.value = Math.max(0, serverHistoriesTotal.value - 1)
   }
 
   // 预测情绪
@@ -136,6 +178,8 @@ export const useEmotionStore = defineStore('emotion', () => {
           face_image: response.data.preprocessed_image,  // 人脸区域图片
           // 保存模型信息
           model: response.data.model_used,  // 从 model_used 复制到 model
+          // 服务端记录ID（用于与服务端历史去重/删除）
+          history_id: response.data.history_id ?? null,
           // 添加唯一ID
           id: Date.now(),
           // 保留后端返回的所有其他字段
@@ -191,24 +235,6 @@ export const useEmotionStore = defineStore('emotion', () => {
     console.log('🗑️ 已清空所有预测记录')
   }
 
-  // 批量预测
-  async function batchPredict(images, detectFace = true) {
-    isLoading.value = true
-    try {
-      const response = await api.post('/batch_predict', {
-        images,
-        model: currentModel.value,
-        detect_face: detectFace
-      })
-      return response.data
-    } catch (error) {
-      console.error('批量预测失败:', error)
-      throw error
-    } finally {
-      isLoading.value = false
-    }
-  }
-
   // 初始化时加载数据（延迟执行以确保 IndexedDB 已准备好）
   setTimeout(async () => {
     const username = await getCurrentUsername()
@@ -227,10 +253,15 @@ export const useEmotionStore = defineStore('emotion', () => {
     predictions,
     isLoading,
     currentPrediction,
+    serverHistories,
+    serverHistoriesTotal,
+    serverHistoriesLoading,
+    serverHistoriesError,
     checkHealth,
     fetchModels,
+    fetchServerHistories,
+    deleteServerHistory,
     predictEmotion,
-    batchPredict,
     setCurrentPrediction,
     clearCurrentPrediction,
     deletePrediction,

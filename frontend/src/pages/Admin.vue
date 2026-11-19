@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="header-content">
         <div class="header-left">
-          <h1>🛠️ 管理员面板</h1>
+          <h1>管理员面板</h1>
           <p>系统管理和用户管理功能</p>
         </div>
         <div class="header-right">
@@ -89,7 +89,7 @@
     <el-card class="users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>👥 用户管理</span>
+          <span>用户管理</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteUsers" :disabled="selectedUsers.length === 0">
               批量删除 ({{ selectedUsers.length }})
@@ -188,7 +188,7 @@
     <el-card class="histories-card users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>📜 预测历史记录</span>
+          <span>预测历史记录</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteHistories" :disabled="selectedHistories.length === 0">
               批量删除 ({{ selectedHistories.length }})
@@ -287,7 +287,7 @@
     <el-card class="journals-card users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>📔 情绪日记记录</span>
+          <span>情绪日记记录</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteJournals" :disabled="selectedJournals.length === 0">
               批量删除 ({{ selectedJournals.length }})
@@ -363,7 +363,7 @@
     <el-card class="gratitudes-card users-card" shadow="hover" style="margin-top:20px">
       <template #header>
         <div class="card-header">
-          <span>🙏 感恩记录</span>
+          <span>感恩记录</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteGratitudes" :disabled="selectedGratitudes.length === 0">
               批量删除 ({{ selectedGratitudes.length }})
@@ -435,7 +435,7 @@
     <el-card class="emotion-summary-card users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>📊 用户情绪汇总</span>
+          <span>用户情绪汇总</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteEmotionSummaries" :disabled="selectedEmotionSummaries.length === 0">
               批量删除 ({{ selectedEmotionSummaries.length }})
@@ -521,7 +521,7 @@
     <el-card class="health-assessment-card users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>🏥 健康评估记录</span>
+          <span>健康评估记录</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteHealthAssessments" :disabled="selectedHealthAssessments.length === 0">
               批量删除 ({{ selectedHealthAssessments.length }})
@@ -578,10 +578,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="positive_rate" label="积极率" width="100">
-          <template #default="{ row }">{{ row.positive_rate ? (row.positive_rate * 100).toFixed(1) + '%' : '-' }}</template>
+          <template #default="{ row }">{{ row.positive_rate != null ? Number(row.positive_rate).toFixed(1) + '%' : '-' }}</template>
         </el-table-column>
         <el-table-column prop="negative_rate" label="消极率" width="100">
-          <template #default="{ row }">{{ row.negative_rate ? (row.negative_rate * 100).toFixed(1) + '%' : '-' }}</template>
+          <template #default="{ row }">{{ row.negative_rate != null ? Number(row.negative_rate).toFixed(1) + '%' : '-' }}</template>
         </el-table-column>
         <el-table-column prop="emotion_stability" label="情绪稳定性" width="120" />
         <el-table-column label="操作" width="200">
@@ -604,7 +604,7 @@
     <el-card class="video-analysis-card users-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>🎬 视频分析结果</span>
+          <span>视频分析结果</span>
           <div style="display:flex;gap:8px">
             <el-button type="danger" @click="batchDeleteVideoAnalyses" :disabled="selectedVideoAnalyses.length === 0">
               批量删除 ({{ selectedVideoAnalyses.length }})
@@ -684,7 +684,7 @@
           @load="handleImageLoad"
         />
         <div v-if="imageLoadError" class="image-error">
-          <el-icon :size="60" color="#909399"><Picture /></el-icon>
+          <el-icon :size="60" color="var(--color-mahogany)"><Picture /></el-icon>
           <p>图片加载失败</p>
           <p class="error-detail">{{ imageErrorMessage }}</p>
         </div>
@@ -801,8 +801,8 @@
               {{ selectedAssessment.risk_level_cn }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="积极率">{{ (selectedAssessment.positive_rate * 100).toFixed(1) }}%</el-descriptions-item>
-          <el-descriptions-item label="消极率">{{ (selectedAssessment.negative_rate * 100).toFixed(1) }}%</el-descriptions-item>
+          <el-descriptions-item label="积极率">{{ Number(selectedAssessment.positive_rate || 0).toFixed(1) }}%</el-descriptions-item>
+          <el-descriptions-item label="消极率">{{ Number(selectedAssessment.negative_rate || 0).toFixed(1) }}%</el-descriptions-item>
           <el-descriptions-item label="情绪稳定性" :span="2">{{ selectedAssessment.emotion_stability }}</el-descriptions-item>
         </el-descriptions>
         <el-divider />
@@ -851,7 +851,7 @@
         <el-card class="settings-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>📊 系统信息</span>
+              <span>系统信息</span>
             </div>
           </template>
           <el-descriptions :column="1" border size="large">
@@ -862,16 +862,16 @@
                   <span>系统版本</span>
                 </div>
               </template>
-              <el-tag>v2.0.0</el-tag>
+              <el-tag>FaceLens v{{ systemInfo.app_version || '2.0.0' }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class="desc-label">
                   <el-icon><Document /></el-icon>
-                  <span>API版本</span>
+                  <span>运行环境</span>
                 </div>
               </template>
-              <el-tag type="success">v1.0.0</el-tag>
+              <el-tag type="success">Python {{ systemInfo.python_version || '-' }} · TF {{ systemInfo.tensorflow_version || '-' }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
@@ -880,16 +880,43 @@
                   <span>运行时间</span>
                 </div>
               </template>
-              <el-tag type="warning">{{ systemUptime }}</el-tag>
+              <el-tag type="warning">{{ systemInfo.uptime || '加载中...' }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item>
               <template #label>
                 <div class="desc-label">
                   <el-icon><Document /></el-icon>
-                  <span>最后更新</span>
+                  <span>数据规模</span>
                 </div>
               </template>
-              {{ formatDate(new Date()) }}
+              {{ systemInfo.total_predictions ?? '-' }} 条识别记录 · {{ systemInfo.total_users ?? '-' }} 个用户
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template #label>
+                <div class="desc-label">
+                  <el-icon><Document /></el-icon>
+                  <span>磁盘占用</span>
+                </div>
+              </template>
+              数据库 {{ formatBytes(systemInfo.database_size_bytes) }} · 上传文件 {{ formatBytes(systemInfo.uploads_size_bytes) }}
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template #label>
+                <div class="desc-label">
+                  <el-icon><Document /></el-icon>
+                  <span>模型状态</span>
+                </div>
+              </template>
+              <el-tag
+                v-for="m in (systemInfo.models || [])"
+                :key="m.name"
+                :type="m.available ? (m.loaded ? 'success' : 'info') : 'danger'"
+                size="small"
+                style="margin-right: 6px;"
+                effect="plain"
+              >
+                {{ m.display_name || m.name.toUpperCase() }}{{ m.available ? (m.loaded ? ' · 已加载' : ' · 可用') : ' · 缺失' }}
+              </el-tag>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -899,7 +926,7 @@
         <el-card class="settings-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>⚙️ 快速操作</span>
+              <span>快速操作</span>
             </div>
           </template>
           <div class="quick-actions">
@@ -909,16 +936,16 @@
               </div>
               <div class="action-content">
                 <div class="action-title">导出系统数据</div>
-                <div class="action-desc">导出用户和系统数据</div>
+                <div class="action-desc">下载系统统计信息（JSON）</div>
               </div>
             </div>
-            <div class="action-button" @click="clearSystemCache">
+            <div class="action-button" @click="fetchSystemInfo">
               <div class="action-icon action-icon-orange">
-                <el-icon :size="24"><Delete /></el-icon>
+                <el-icon :size="24"><Refresh /></el-icon>
               </div>
               <div class="action-content">
-                <div class="action-title">清理系统缓存</div>
-                <div class="action-desc">清除临时文件和缓存</div>
+                <div class="action-title">刷新系统信息</div>
+                <div class="action-desc">重新获取运行状态与模型加载情况</div>
               </div>
             </div>
             <div class="action-button" @click="viewSystemLogs">
@@ -927,12 +954,12 @@
               </div>
               <div class="action-content">
                 <div class="action-title">查看系统日志</div>
-                <div class="action-desc">查看系统运行日志</div>
+                <div class="action-desc">查看后端运行日志（最近 200 行）</div>
               </div>
             </div>
             <div class="action-button" @click="refreshUsers">
               <div class="action-icon action-icon-green">
-                <el-icon :size="24"><Refresh /></el-icon>
+                <el-icon :size="24"><User /></el-icon>
               </div>
               <div class="action-content">
                 <div class="action-title">刷新用户数据</div>
@@ -943,6 +970,18 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 系统日志对话框 -->
+    <el-dialog v-model="logsDialogVisible" title="系统日志" width="860px" top="6vh">
+      <div v-loading="logsLoading" class="logs-container">
+        <pre v-if="systemLogs.length" class="logs-content">{{ systemLogs.join('\n') }}</pre>
+        <el-empty v-else-if="!logsLoading" description="暂无日志" />
+      </div>
+      <template #footer>
+        <el-button @click="viewSystemLogs" :loading="logsLoading">刷新</el-button>
+        <el-button type="primary" @click="logsDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1031,11 +1070,6 @@ const selectedHealthAssessments = ref([])
 const selectedVideoAnalyses = ref([])
 
 // 计算属性
-const systemUptime = computed(() => {
-  // 简化的运行时间计算
-  return '2天 15小时 30分钟'
-})
-
 // 过滤后的数据
 const filteredUsers = computed(() => {
   if (!userSearchText.value) return users.value
@@ -1136,14 +1170,6 @@ const fetchHistories = async () => {
   try {
     const res = await api.get('/admin/histories')
     histories.value = res.data.histories
-    
-    // 🐛 调试：检查视频记录的 username 字段
-    const videoRecords = res.data.histories.filter(h => h.input_type === 'video')
-    console.log('📹 [Admin] 视频记录数量:', videoRecords.length)
-    if (videoRecords.length > 0) {
-      console.log('📹 [Admin] 第一条视频记录:', videoRecords[0])
-      console.log('📹 [Admin] 视频记录的 username:', videoRecords.map(v => ({ id: v.id, username: v.username, input_type: v.input_type })))
-    }
   } catch (err) {
     console.error('获取历史记录失败:', err)
     ElMessage.error('获取历史记录失败')
@@ -1314,19 +1340,64 @@ const batchDeleteUsers = async () => {
   }
 }
 
-// 导出系统数据
+// 系统信息（来自 /admin/system-info 的真实运行数据）
+const systemInfo = ref({})
+const systemInfoLoading = ref(false)
+
+const fetchSystemInfo = async () => {
+  systemInfoLoading.value = true
+  try {
+    const response = await api.get('/admin/system-info')
+    systemInfo.value = response.data?.info || {}
+  } catch (error) {
+    console.error('获取系统信息失败:', error)
+    ElMessage.error('获取系统信息失败（需要管理员权限）')
+  } finally {
+    systemInfoLoading.value = false
+  }
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes <= 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+}
+
+// 导出系统数据：将当前统计与系统信息保存为 JSON
 const exportSystemData = () => {
-  ElMessage.info('导出系统数据功能开发中...')
+  const data = {
+    exported_at: new Date().toISOString(),
+    system_stats: systemStats.value,
+    system_info: systemInfo.value
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `system_export_${new Date().toISOString().split('T')[0]}.json`
+  link.click()
+  URL.revokeObjectURL(link.href)
+  ElMessage.success('系统数据导出成功')
 }
 
-// 清理系统缓存
-const clearSystemCache = () => {
-  ElMessage.info('清理系统缓存功能开发中...')
-}
+// 查看系统日志（后端日志文件尾部）
+const logsDialogVisible = ref(false)
+const logsLoading = ref(false)
+const systemLogs = ref([])
 
-// 查看系统日志
-const viewSystemLogs = () => {
-  ElMessage.info('查看系统日志功能开发中...')
+const viewSystemLogs = async () => {
+  logsDialogVisible.value = true
+  logsLoading.value = true
+  try {
+    const response = await api.get('/admin/system-logs', { params: { lines: 200 } })
+    systemLogs.value = response.data?.logs || []
+  } catch (error) {
+    console.error('获取系统日志失败:', error)
+    ElMessage.error('获取系统日志失败')
+  } finally {
+    logsLoading.value = false
+  }
 }
 
 // 格式化日期时间
@@ -1400,8 +1471,13 @@ const toUploadApiUrl = (filePath) => {
   if (!path || path.includes('..')) return null
 
   const encoded = path.split('/').map(encodeURIComponent).join('/')
-  // 走 Vite 代理 /api → 后端，避免写死 localhost:5000
-  return `/api/uploads/${encoded}`
+  const base = `/api/uploads/${encoded}`
+  const token = localStorage.getItem('token')
+  if (token) {
+    const sep = base.includes('?') ? '&' : '?'
+    return `${base}${sep}token=${encodeURIComponent(token)}`
+  }
+  return base
 }
 
 // 根据记录生成可用的预览图片地址（支持后端返回的 base64、url、文件路径字段）
@@ -1439,16 +1515,6 @@ const getPreviewSrc = (row) => {
 }
 
 // 点击缩略图时在新标签打开大图
-const viewImage = (row) => {
-  const src = getPreviewSrc(row)
-  if (!src) {
-    ElMessage.info('无可预览的图片')
-    return
-  }
-  // 打开新窗口预览（大部分浏览器支持 data url）
-  window.open(src, '_blank')
-}
-
 // 从多种来源解析并返回历史记录对应的用户名（兼容后端是否返回 user 对象）
 const getHistoryUsername = (row) => {
   if (!row) return '-'
@@ -2041,14 +2107,11 @@ const viewImageDetail = (row) => {
   imageLoadError.value = false
   imageErrorMessage.value = ''
   showImageDialog.value = true
-  
-  console.log('🖼️ 加载图片:', src)
 }
 
 // 图片加载成功
 const handleImageLoad = () => {
   imageLoadError.value = false
-  console.log('✅ 图片加载成功')
 }
 
 // 图片加载失败
@@ -2081,12 +2144,12 @@ onMounted(async () => {
     ElMessage.error('权限不足，只有管理员可以访问此页面')
     // 延迟跳转，避免组件渲染问题
     setTimeout(() => {
-      router.push('/')
+      router.push('/home')
     }, 1000)
     return
   }
 
-  // 为了确保历史记录能正确映射到用户名，先加载用户列表，再加载历史
+  // 为了确保历史记录能正确映射到用户名，先加载用户列表
   try {
     await fetchUsers()
   } catch (e) {
@@ -2094,46 +2157,18 @@ onMounted(async () => {
     console.warn('加载用户列表时发生错误:', e)
   }
 
-  try {
-    await fetchHistories()
-  } catch (e) {
-    console.warn('加载历史记录时发生错误:', e)
-  }
+  // 加载真实系统信息（运行时长/版本/模型状态）
+  fetchSystemInfo()
 
-  // 加载情绪日记
-  try {
-    await fetchJournals()
-  } catch (e) {
-    console.warn('加载情绪日记时发生错误:', e)
-  }
-
-  // 加载感恩记录
-  try {
-    await fetchGratitudes()
-  } catch (e) {
-    console.warn('加载感恩记录时发生错误:', e)
-  }
-
-  // 加载情绪汇总
-  try {
-    await fetchEmotionSummaries()
-  } catch (e) {
-    console.warn('加载情绪汇总时发生错误:', e)
-  }
-
-  // 加载健康评估
-  try {
-    await fetchHealthAssessments()
-  } catch (e) {
-    console.warn('加载健康评估时发生错误:', e)
-  }
-
-  // 加载视频分析
-  try {
-    await fetchVideoAnalyses()
-  } catch (e) {
-    console.warn('加载视频分析时发生错误:', e)
-  }
+  // 其余数据相互独立，并行加载（此前逐个 await，首屏时间被串行放大）
+  await Promise.allSettled([
+    fetchHistories(),
+    fetchJournals(),
+    fetchGratitudes(),
+    fetchEmotionSummaries(),
+    fetchHealthAssessments(),
+    fetchVideoAnalyses(),
+  ])
 
   // 系统统计可以并行加载
   fetchSystemStats()
@@ -2150,7 +2185,7 @@ onMounted(async () => {
 .page-header {
   margin-bottom: 2rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary-light-9);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
 }
@@ -2164,15 +2199,13 @@ onMounted(async () => {
 
 .header-left h1 {
   font-size: 2.5rem;
-  color: #ffffff;
+  color: var(--color-ink);
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-left p {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-mahogany);
   font-size: 1.1rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .header-right .el-tag {
@@ -2248,16 +2281,16 @@ onMounted(async () => {
 .stat-value {
   font-size: 2.2rem;
   font-weight: bold;
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary-light-9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-label {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 1rem;
   font-weight: 500;
 }
@@ -2275,7 +2308,7 @@ onMounted(async () => {
   align-items: center;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-ink);
 }
 
 /* 系统设置卡片 */
@@ -2287,7 +2320,7 @@ onMounted(async () => {
 }
 
 .settings-card h4 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 1rem;
   font-size: 1.1rem;
 }
@@ -2310,7 +2343,7 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
@@ -2318,10 +2351,10 @@ onMounted(async () => {
 }
 
 .action-button:hover {
-  background: #ffffff;
+  background: var(--el-fill-color-light);
   transform: translateX(5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #e4e7ed;
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-sand);
 }
 
 .action-icon {
@@ -2358,13 +2391,13 @@ onMounted(async () => {
 .action-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 4px;
 }
 
 .action-desc {
   font-size: 13px;
-  color: #909399;
+  color: var(--color-mahogany);
 }
 
 /* 表格样式优化 */
@@ -2374,12 +2407,12 @@ onMounted(async () => {
 }
 
 :deep(.el-table th) {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  background: linear-gradient(135deg, var(--el-color-primary-light-9) 0%, var(--color-sand) 100%);
   font-weight: 600;
 }
 
 :deep(.el-table__row:hover) {
-  background-color: #f5f7fa;
+  background-color: var(--el-color-primary-light-9);
 }
 
 /* 响应式设计 */
@@ -2453,7 +2486,7 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  background-color: #f5f7fa;
+  background-color: var(--el-color-primary-light-9);
   border-radius: 8px;
   padding: 20px;
   position: relative;
@@ -2477,7 +2510,7 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #909399;
+  color: var(--color-mahogany);
   text-align: center;
 }
 
@@ -2488,7 +2521,7 @@ onMounted(async () => {
 
 .image-error .error-detail {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--color-mahogany);
   word-break: break-all;
   max-width: 500px;
 }
@@ -2499,11 +2532,11 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #606266;
+  color: var(--color-mahogany);
 }
 
 .journal-detail .journal-content {
-  background-color: #f5f7fa;
+  background-color: var(--el-color-primary-light-9);
   padding: 20px;
   border-radius: 8px;
   margin-top: 16px;
@@ -2511,12 +2544,12 @@ onMounted(async () => {
 
 .journal-detail .journal-content h4 {
   margin-bottom: 12px;
-  color: #303133;
+  color: var(--color-ink);
 }
 
 .journal-detail .journal-content p {
   line-height: 1.8;
-  color: #606266;
+  color: var(--color-mahogany);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -2532,19 +2565,7 @@ onMounted(async () => {
   margin-top: 20px;
 }
 
-/* 深色模式支持 */
-.dark .page-header {
-  background: rgba(44, 44, 44, 0.95);
-}
-
-.dark .page-header h1 {
-  color: #e0e0e0;
-}
-
-.dark .page-header p {
-  color: #b0b0b0;
-}
-
+/* 深色模式支持（页面头部已改用主题令牌，无需单独覆盖） */
 .dark .stat-value {
   color: #e0e0e0;
 }
@@ -2603,7 +2624,27 @@ onMounted(async () => {
 .data-tabs .emotion-summary-card :deep(.el-card__header),
 .data-tabs .health-assessment-card :deep(.el-card__header),
 .data-tabs .video-analysis-card :deep(.el-card__header) {
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--color-sand);
   padding: 20px;
+}
+
+/* 系统日志对话框 */
+.logs-container {
+  max-height: 62vh;
+  overflow-y: auto;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--color-sand);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.logs-content {
+  margin: 0;
+  font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-ink);
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

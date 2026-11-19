@@ -6,7 +6,7 @@
         <el-card class="upload-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>📸 上传图片</span>
+              <span>上传图片</span>
             </div>
           </template>
           
@@ -14,10 +14,9 @@
           <div class="model-selector">
             <el-text>选择模型:</el-text>
             <el-radio-group v-model="emotionStore.currentModel" class="model-group">
-              <el-radio label="cnn">CNN (83.77%) ⭐</el-radio>
-              <el-radio label="vgg">VGG16 (80%)</el-radio>
-              <el-radio label="se81">SE-Net (81%)</el-radio>
-              <el-radio label="se83">SE-Net (83%) ⭐</el-radio>
+              <el-radio v-for="opt in modelOptions" :key="opt.value" :label="opt.value">
+                {{ opt.label }}{{ opt.recommended ? ' · 推荐' : '' }}
+              </el-radio>
             </el-radio-group>
           </div>
 
@@ -83,7 +82,7 @@
         <el-card v-if="emotionStore.predictions.length > 0" class="history-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>📜 识别历史</span>
+              <span>识别历史</span>
               <el-button text @click="$router.push('/history')">查看全部</el-button>
             </div>
           </template>
@@ -109,7 +108,7 @@
         <el-card class="result-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>📊 识别结果</span>
+              <span>识别结果</span>
             </div>
           </template>
 
@@ -215,7 +214,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { UploadFilled, Camera, VideoCamera, Reading } from '@element-plus/icons-vue'
@@ -281,8 +280,21 @@ function formatTime(timestamp) {
   return date.toLocaleTimeString('zh-CN')
 }
 
-// 文件选择处理
+// 文件选择处理（与后端上限一致：16MB）
+const MAX_IMAGE_BYTES = 16 * 1024 * 1024
+
 function handleFileChange(file) {
+  const raw = file.raw
+  if (raw && raw.type && !raw.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件')
+    handleClear()
+    return
+  }
+  if (raw && raw.size > MAX_IMAGE_BYTES) {
+    ElMessage.error('图片过大（最大 16MB）')
+    handleClear()
+    return
+  }
   const reader = new FileReader()
   reader.onload = (e) => {
     previewImage.value = e.target.result
@@ -385,9 +397,15 @@ function handleCameraClose() {
   showCameraDialog.value = false
 }
 
+// 卸载页面时确保摄像头指示灯熄灭（对话框未关直接跳路由的场景）
+onUnmounted(() => {
+  handleCameraClose()
+})
+
 onMounted(() => {
   emotionStore.checkHealth()
-  
+  loadModelOptions()
+
   // 恢复上次的预测结果
   if (emotionStore.currentPrediction) {
     currentResult.value = emotionStore.currentPrediction
@@ -396,9 +414,37 @@ onMounted(() => {
     } else {
       previewImage.value = emotionStore.currentPrediction.preprocessed_image
     }
-    console.log('✅ 已恢复上次的分析结果')
   }
 })
+
+// 模型选项：准确率从后端实时获取，失败时使用静态兜底
+const modelOptions = ref([
+  { value: 'cnn', label: 'CNN (83.77%)', recommended: true },
+  { value: 'vgg', label: 'VGG16 (80%)', recommended: false },
+  { value: 'se81', label: 'SE-Net (81%)', recommended: false },
+  { value: 'se83', label: 'SE-Net (83%)', recommended: true }
+])
+
+async function loadModelOptions() {
+  try {
+    await emotionStore.fetchModels()
+    const models = emotionStore.availableModels
+    if (Array.isArray(models) && models.length) {
+      modelOptions.value = models.map((m) => {
+        const acc = typeof m.accuracy === 'number' && m.accuracy <= 1
+          ? (m.accuracy * 100).toFixed(2)
+          : m.accuracy
+        return {
+          value: m.name,
+          label: `${m.display_name || m.name.toUpperCase()} (${acc}%)`,
+          recommended: m.name === 'cnn' || m.name === 'se83'
+        }
+      })
+    }
+  } catch (error) {
+    // 保留静态兜底
+  }
+}
 
 // 监听摄像头对话框打开
 watch(() => showCameraDialog.value, (newVal) => {
@@ -461,7 +507,7 @@ watch(() => showCameraDialog.value, (newVal) => {
 
 .upload-icon {
   font-size: 4rem;
-  color: #409eff;
+  color: var(--el-color-primary);
   margin-bottom: 1rem;
 }
 
@@ -471,7 +517,7 @@ watch(() => showCameraDialog.value, (newVal) => {
 }
 
 .upload-hint {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 0.875rem;
 }
 
@@ -534,13 +580,13 @@ watch(() => showCameraDialog.value, (newVal) => {
   max-height: 260px;
   object-fit: contain;
   border-radius: 8px;
-  border: 1px solid #ebeef5;
-  background: #fafafa;
+  border: 1px solid var(--color-sand);
+  background: var(--color-parchment);
 }
 
 .image-note {
   font-size: 0.875rem;
-  color: #909399;
+  color: var(--color-mahogany);
   text-align: center;
 }
 
@@ -550,7 +596,7 @@ watch(() => showCameraDialog.value, (newVal) => {
   gap: 2rem;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 20%, transparent) 0%, color-mix(in srgb, var(--color-accent) 20%, transparent) 100%);
   border-radius: 12px;
 }
 
@@ -566,11 +612,11 @@ watch(() => showCameraDialog.value, (newVal) => {
 .emotion-info h2 {
   font-size: 2rem;
   margin-bottom: 0.5rem;
-  color: #303133;
+  color: var(--color-ink);
 }
 
 .emotion-en {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 1rem;
   margin-bottom: 1rem;
   text-transform: capitalize;
@@ -578,7 +624,7 @@ watch(() => showCameraDialog.value, (newVal) => {
 
 .confidence-text {
   margin-top: 0.5rem;
-  color: #606266;
+  color: var(--color-mahogany);
   font-weight: bold;
 }
 
@@ -648,7 +694,7 @@ watch(() => showCameraDialog.value, (newVal) => {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   transition: all 0.3s;
 }
@@ -673,7 +719,7 @@ watch(() => showCameraDialog.value, (newVal) => {
 }
 
 .history-time {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 0.875rem;
 }
 

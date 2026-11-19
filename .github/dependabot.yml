@@ -1,0 +1,50 @@
+version: 2
+updates:
+  # 本项目基线为 Python 3.8 + TensorFlow 2.10（3.8 是 TF 2.10 支持的上限），
+  # 主版本升级通常需要更高的 Python/Node 基线，因此忽略 semver-major，
+  # 只跟踪向下兼容的 minor / patch 更新。
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Flask-Limiter >= 3.6 / numpy >= 1.25 要求 Python >= 3.9，
+      # 且 TF 2.10 依赖 numpy < 1.25、opencv 4.14 与当前 numpy 冲突，
+      # 与当前 3.8 基线不兼容；升级 Python/TF 基线后应移除以下条目
+      - dependency-name: flask-limiter
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: numpy
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: opencv-contrib-python-headless
+        update-types: ["version-update:semver-minor"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+    ignore:
+      # 基础镜像固定在 bullseye（3.8 时代），忽略 python 小版本及以上升级
+      - dependency-name: python
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly
+    ignore:
+      # node 大版本升级需同步验证构建，nginx 大版本需验证配置兼容
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      - dependency-name: nginx
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

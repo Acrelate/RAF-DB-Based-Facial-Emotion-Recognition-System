@@ -2,7 +2,7 @@
   <div class="health-view">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>💚 心理健康中心</h1>
+      <h1>心理健康中心</h1>
       <p>基于您的情绪状态，提供个性化的心理健康建议和放松技巧</p>
     </div>
 
@@ -12,16 +12,16 @@
         <template #image>
           <div style="font-size: 80px;">😊</div>
         </template>
-        <p style="color: #909399; margin-bottom: 1rem;">
+        <p style="color: var(--color-mahogany); margin-bottom: 1rem;">
           请先在首页上传照片进行情绪识别，系统会为您提供个性化的心理健康建议
         </p>
-        <el-button type="primary" @click="$router.push('/')">
+        <el-button type="primary" @click="$router.push('/home')">
           前往首页识别
         </el-button>
       </el-empty>
       <el-divider />
       <div style="margin-top: 2rem;">
-        <h3 style="text-align: center; margin-bottom: 1rem;">💡 浏览所有情绪建议</h3>
+        <h3 style="text-align: center; margin-bottom: 1rem;">浏览所有情绪建议</h3>
         <el-row :gutter="16">
           <el-col :xs="12" :sm="8" :md="6" v-for="emotion in allEmotions" :key="emotion.key">
             <el-button 
@@ -39,9 +39,12 @@
     <el-card class="emotion-status-card" shadow="hover" v-else>
       <template #header>
         <div class="card-header">
-          <span>😊 当前情绪状态</span>
+          <span>当前情绪状态</span>
           <el-tag :type="getEmotionTagType(latestEmotion.emotion)">
             {{ latestEmotion.emotion_cn }}
+          </el-tag>
+          <el-tag v-if="latestEmotion.manual" size="small" type="info" effect="plain" style="margin-left: 8px;">
+            手动选择
           </el-tag>
         </div>
       </template>
@@ -70,7 +73,7 @@
           <template #header>
             <div class="card-header">
               <el-icon color="#67c23a"><info-filled /></el-icon>
-              <span>💡 即时建议</span>
+              <span>即时建议</span>
             </div>
           </template>
           <div class="advice-content">
@@ -92,7 +95,7 @@
           <template #header>
             <div class="card-header">
               <el-icon color="#409eff"><medal /></el-icon>
-              <span>🧘 放松技巧</span>
+              <span>放松技巧</span>
             </div>
           </template>
           <div class="advice-content">
@@ -125,7 +128,7 @@
           <template #header>
             <div class="card-header">
               <el-icon color="#e6a23c"><reading /></el-icon>
-              <span>📚 推荐资源</span>
+              <span>推荐资源</span>
             </div>
           </template>
           <div class="advice-content">
@@ -154,8 +157,8 @@
     <el-card class="emotion-trend-card" shadow="hover" v-if="allEmotionRecords.length > 3">
       <template #header>
         <div class="card-header">
-          <el-icon color="#f093fb"><trend-charts /></el-icon>
-          <span>📈 情绪历史趋势</span>
+          <el-icon color="var(--color-mahogany)"><trend-charts /></el-icon>
+          <span>情绪历史趋势</span>
         </div>
       </template>
       <div class="trend-content">
@@ -173,7 +176,7 @@
           </el-col>
           <el-col :xs="24" :sm="12" :md="6">
             <div class="trend-stat">
-              <div class="trend-icon" style="background: linear-gradient(135deg, #f56c6c 0%, #f093fb 100%)">
+              <div class="trend-icon" style="background: var(--el-color-primary-light-9)">
                 😢
               </div>
               <div class="trend-info">
@@ -184,7 +187,7 @@
           </el-col>
           <el-col :xs="24" :sm="12" :md="6">
             <div class="trend-stat">
-              <div class="trend-icon" style="background: linear-gradient(135deg, #409eff 0%, #667eea 100%)">
+              <div class="trend-icon" style="background: linear-gradient(135deg, #409eff 0%, var(--color-accent) 100%)">
                 📊
               </div>
               <div class="trend-info">
@@ -229,7 +232,7 @@
       <template #header>
         <div class="card-header">
           <el-icon color="#409eff"><document /></el-icon>
-          <span>📖 {{ currentEmotionKnowledge.title }}</span>
+          <span>{{ currentEmotionKnowledge.title }}</span>
         </div>
       </template>
       <div class="education-content">
@@ -252,7 +255,7 @@
         </el-collapse>
 
         <div class="knowledge-tips" v-if="currentEmotionKnowledge.tips">
-          <h5>💡 重要提示</h5>
+          <h5>重要提示</h5>
           <ul>
             <li v-for="(tip, index) in currentEmotionKnowledge.tips" :key="index">
               {{ tip }}
@@ -262,7 +265,7 @@
 
         <!-- 推荐书籍 -->
         <div class="recommended-books" v-if="recommendedBooks.length > 0">
-          <h5>📚 延伸阅读</h5>
+          <h5>延伸阅读</h5>
           <div class="book-list">
             <div class="book-item" v-for="(book, index) in recommendedBooks" :key="index">
               <div class="book-info">
@@ -281,7 +284,7 @@
     <el-card class="more-advice-card" shadow="hover" v-if="latestEmotion">
       <template #header>
         <div class="card-header">
-          <span>📚 更多{{ latestEmotion.emotion_cn }}建议 ({{ allAdviceList.length }}条)</span>
+          <span>更多{{ latestEmotion.emotion_cn }}建议 ({{ allAdviceList.length }}条)</span>
           <el-button type="primary" size="small" @click="refreshAdviceList">
             <el-icon><refresh /></el-icon> 换一批
           </el-button>
@@ -322,7 +325,7 @@
     <el-card class="toolbox-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>🧰 情绪管理工具箱</span>
+          <span>情绪管理工具箱</span>
         </div>
       </template>
       <el-tabs v-model="activeTab" class="toolbox-tabs">
@@ -337,7 +340,7 @@
             <div class="breathing-info" v-if="currentBreathingInfo">
               <p><strong>{{ currentBreathingInfo.name }}</strong></p>
               <p>{{ currentBreathingInfo.description }}</p>
-              <p class="benefit-text">✨ {{ currentBreathingInfo.benefit }}</p>
+              <p class="benefit-text">{{ currentBreathingInfo.benefit }}</p>
             </div>
             <div class="breathing-circle" :class="{ breathing: isBreathing }">
               <span class="breathing-text">{{ breathingText }}</span>
@@ -368,7 +371,7 @@
             <div v-if="selectedMeditation" class="meditation-content">
               <h4>{{ getCurrentMeditation().title }}</h4>
               <p class="meditation-description">{{ getCurrentMeditation().description }}</p>
-              <p class="meditation-duration">⏱️ {{ getCurrentMeditation().duration }}</p>
+              <p class="meditation-duration">{{ getCurrentMeditation().duration }}</p>
               <el-divider />
               <div class="meditation-video-container">
                 <video 
@@ -382,7 +385,7 @@
                 </video>
               </div>
               <div class="meditation-tips">
-                <h5>💡 冥想小贴士：</h5>
+                <h5>冥想小贴士</h5>
                 <ul>
                   <li>找一个安静、舒适的环境</li>
                   <li>调整坐姿或躺姿，保持身体放松</li>
@@ -419,7 +422,7 @@
               </el-button-group>
               <el-button @click="resetPmr" style="margin-left: 1rem;">重新开始</el-button>
             </div>
-            <p class="pmr-tip">💡 每个动作紧张5秒,放松10秒,感受差异</p>
+            <p class="pmr-tip">每个动作紧张 5 秒、放松 10 秒，感受两者的差异</p>
           </div>
         </el-tab-pane>
 
@@ -445,7 +448,7 @@
             <el-button type="primary" @click="completeGrounding">
               完成练习
             </el-button>
-            <p class="grounding-benefit">✨ 适用于焦虑发作、惊恐、解离等情况</p>
+            <p class="grounding-benefit">适用于焦虑发作、惊恐、解离等情况</p>
           </div>
         </el-tab-pane>
 
@@ -502,7 +505,7 @@
           <template #header>
             <div class="card-header">
               <el-icon color="#f56c6c"><warning-filled /></el-icon>
-              <span>🆘 紧急求助热线</span>
+              <span>紧急求助热线</span>
             </div>
           </template>
           <div class="emergency-content">
@@ -513,7 +516,7 @@
                 v-for="(contact, index) in mentalHealthResources.emergencyContacts" 
                 :key="index"
               >
-                <h5>📞 {{ contact.name }}</h5>
+                <h5>{{ contact.name }}</h5>
                 <p class="contact-phone"><strong>{{ contact.phone }}</strong></p>
                 <p class="contact-desc">{{ contact.description }}</p>
                 <el-tag size="small" type="info">{{ contact.coverage }}</el-tag>
@@ -528,7 +531,7 @@
           <template #header>
             <div class="card-header">
               <el-icon color="#409eff"><reading /></el-icon>
-              <span>🌐 在线资源</span>
+              <span>在线资源</span>
             </div>
           </template>
           <div class="resources-content">
@@ -556,7 +559,7 @@
       <template #header>
         <div class="card-header">
           <el-icon color="#67c23a"><video-camera /></el-icon>
-          <span>🎓 推荐课程</span>
+          <span>推荐课程</span>
         </div>
       </template>
       <div class="courses-content">
@@ -625,7 +628,7 @@
       </div>
       <div v-else class="empty-journal">
         <el-empty description="暂无日记记录" />
-        <p style="text-align: center; margin-top: 1rem; color: #909399;">
+        <p style="text-align: center; margin-top: 1rem; color: var(--color-mahogany);">
           开始记录你的第一则情绪日记吧！
         </p>
       </div>
@@ -693,7 +696,7 @@
       </div>
       <div v-else class="empty-journal">
         <el-empty description="暂无感恩记录" />
-        <p style="text-align: center; margin-top: 1rem; color: #909399;">
+        <p style="text-align: center; margin-top: 1rem; color: var(--color-mahogany);">
           开始记录你的第一次感恩吧！
         </p>
       </div>
@@ -730,47 +733,67 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useEmotionStore } from '../stores/emotion'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { InfoFilled, Medal, Reading, WarningFilled, Refresh, ArrowDown, ArrowUp, Document, VideoCamera } from '@element-plus/icons-vue'
-import { 
-  emotionAdviceLibrary, 
+import {
+  emotionAdviceLibrary,
   getRandomAdvice,
   emotionKnowledgeBase,
   getEmotionKnowledge,
-  mentalHealthResources,
-  healingTechniques
+  mentalHealthResources
 } from '../data/adviceLibrary'
 import { useVideoStore } from '../stores/video'
+import api from '../api/client'
 
 const emotionStore = useEmotionStore()
 const videoStore = useVideoStore()
 
-// 合并图片识别和视频分析的所有情绪数据
+// 合并图片识别和视频分析的所有情绪数据（服务端历史优先，本地补充）
 const allEmotionRecords = computed(() => {
-  const imagePredictions = emotionStore.predictions || []
-  const videoPredictions = []
-  
-  // 从视频历史记录中提取所有帧的预测结果
-  if (videoStore.videoHistory && Array.isArray(videoStore.videoHistory)) {
+  const records = []
+
+  // 服务端历史记录（含图片与视频帧）
+  ;(emotionStore.serverHistories || []).forEach(rec => {
+    records.push({
+      emotion: rec.emotion,
+      emotion_cn: rec.emotion_cn,
+      confidence: rec.confidence,
+      timestamp: rec.created_at,
+      source: (rec.input_type || 'image') === 'video' ? 'video' : 'image',
+      origin: 'server'
+    })
+  })
+
+  // 本地图片预测：仅补充服务端没有的记录（分页外的服务端记录由本地副本兜底展示）
+  const serverHistoryIds = new Set((emotionStore.serverHistories || []).map(r => r.id))
+  ;(emotionStore.predictions || []).forEach(pred => {
+    if (pred.history_id && serverHistoryIds.has(pred.history_id)) return
+    records.push({ ...pred, source: 'image', origin: 'local' })
+  })
+
+  // 本地视频帧：服务端没有视频记录时兜底
+  const serverHasVideo = (emotionStore.serverHistories || []).some(r => (r.input_type || 'image') === 'video')
+  if (!serverHasVideo && videoStore.videoHistory && Array.isArray(videoStore.videoHistory)) {
     videoStore.videoHistory.forEach(video => {
       if (video.results && video.results.timeline && Array.isArray(video.results.timeline)) {
         video.results.timeline.forEach(frame => {
-          videoPredictions.push({
+          records.push({
             emotion: frame.emotion,
             emotion_cn: frame.emotion_cn,
             confidence: frame.confidence,
-            timestamp: frame.timestamp || video.timestamp,
+            timestamp: video.timestamp, // frame.timestamp 是视频内秒数，不能当日期
             source: 'video',
-            video_id: video.video_id
+            video_id: video.video_id,
+            origin: 'local'
           })
         })
       }
     })
   }
-  
-  return [...imagePredictions, ...videoPredictions].sort((a, b) => 
+
+  return records.sort((a, b) =>
     new Date(b.timestamp) - new Date(a.timestamp)
   )
 })
@@ -796,7 +819,8 @@ const latestEmotion = computed(() => {
       emotion: selectedEmotion.value,
       emotion_cn: allEmotions.find(e => e.key === selectedEmotion.value)?.name || '未知',
       confidence: 1.0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      manual: true
     }
   }
   return allEmotionRecords.value.length > 0
@@ -850,7 +874,28 @@ function refreshAdviceList() {
 }
 
 // ===== 情绪统计分析 =====
+// 服务端健康评估（/health/assessment，由后端基于当日情绪记录生成）
+const serverAssessment = ref(null)
+
 const emotionStats = computed(() => {
+  const local = computeLocalEmotionStats()
+  const a = serverAssessment.value
+  if (!a || (!a.alert_title && a.health_score == null)) return local
+
+  return {
+    positiveRate: a.positive_rate != null ? Number(a.positive_rate).toFixed(1) : local.positiveRate,
+    negativeRate: a.negative_rate != null ? Number(a.negative_rate).toFixed(1) : local.negativeRate,
+    stability: a.stability_level || local.stability,
+    stabilityRate: local.stabilityRate,
+    alertTitle: a.alert_title || local.alertTitle,
+    alertType: a.alert_type === 'error' ? 'error' : (a.alert_type || local.alertType),
+    alertDescription: a.alert_description || local.alertDescription,
+    suggestions: (Array.isArray(a.suggestions) && a.suggestions.length) ? a.suggestions : local.suggestions,
+    fromServer: true
+  }
+})
+
+function computeLocalEmotionStats() {
   if (allEmotionRecords.value.length === 0) {
     return {
       positiveRate: 0,
@@ -945,7 +990,7 @@ const emotionStats = computed(() => {
     alertDescription,
     suggestions
   }
-})
+}
 
 // 情绪到emoji的映射
 const emotionEmojiMap = {
@@ -1694,8 +1739,14 @@ function stopBreathing() {
   breathingInstruction.value = '选择一种呼吸法，点击开始按钮'
   if (breathingTimer) {
     clearTimeout(breathingTimer)
+    breathingTimer = null
   }
 }
+
+// 离开页面时终止呼吸训练的 setTimeout 链，否则练习会话会在后台无限延续
+onUnmounted(() => {
+  stopBreathing()
+})
 
 // 渐进式肌肉放松
 const pmrStep = ref(0)
@@ -2055,8 +2106,22 @@ function formatJournalTime(dateString) {
 // 复用现有的getEmotionEmoji函数，不再重复声明
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   getNewAdvice()
+
+  // 拉取服务端历史与健康评估（失败时静默降级为本地数据）
+  try {
+    await emotionStore.fetchServerHistories(100, 3)
+  } catch (error) {
+    console.warn('服务端历史拉取失败，使用本地数据', error)
+  }
+  try {
+    const response = await api.get('/health/assessment')
+    const data = response.data?.data
+    serverAssessment.value = Array.isArray(data) ? data[data.length - 1] : data || null
+  } catch (error) {
+    console.warn('健康评估获取失败，使用本地计算', error)
+  }
 })
 </script>
 
@@ -2070,19 +2135,19 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 2rem;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .page-header h1 {
   font-size: 2.5rem;
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.5rem;
 }
 
 .page-header p {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 1.1rem;
 }
 
@@ -2112,7 +2177,7 @@ onMounted(() => {
 }
 
 .emotion-time {
-  color: #909399;
+  color: var(--color-mahogany);
   margin-top: 0.5rem;
 }
 
@@ -2135,7 +2200,7 @@ onMounted(() => {
 
 .advice-item {
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   margin-bottom: 1rem;
   transition: all 0.3s;
@@ -2149,7 +2214,7 @@ onMounted(() => {
 }
 
 .advice-item p {
-  color: #303133;
+  color: var(--color-ink);
   line-height: 1.6;
   margin: 0;
   font-size: 0.9rem;
@@ -2168,12 +2233,12 @@ onMounted(() => {
 }
 
 .advice-content h4 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.75rem;
 }
 
 .advice-content p {
-  color: #606266;
+  color: var(--color-mahogany);
   line-height: 1.6;
   margin-bottom: 1rem;
 }
@@ -2183,7 +2248,7 @@ onMounted(() => {
 }
 
 .advice-content li {
-  color: #606266;
+  color: var(--color-mahogany);
   margin: 0.5rem 0;
   line-height: 1.6;
 }
@@ -2208,7 +2273,7 @@ onMounted(() => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   transition: all 0.3s;
 }
@@ -2223,12 +2288,12 @@ onMounted(() => {
 }
 
 .resource-info h5 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.5rem;
 }
 
 .resource-info p {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -2247,7 +2312,7 @@ onMounted(() => {
   height: 200px;
   margin: 0 auto 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary-light-9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2271,7 +2336,7 @@ onMounted(() => {
 }
 
 .breathing-instruction {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 1.1rem;
   margin-top: 1rem;
 }
@@ -2279,14 +2344,14 @@ onMounted(() => {
 .breathing-info {
   text-align: center;
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   margin-bottom: 1rem;
 }
 
 .breathing-info p {
   margin: 0.5rem 0;
-  color: #606266;
+  color: var(--color-mahogany);
 }
 
 .benefit-text {
@@ -2301,7 +2366,7 @@ onMounted(() => {
 
 .pmr-intro {
   text-align: center;
-  color: #606266;
+  color: var(--color-mahogany);
   margin-bottom: 1.5rem;
   padding: 1rem;
   background: #f0f9ff;
@@ -2334,7 +2399,7 @@ onMounted(() => {
 
 .grounding-intro {
   text-align: center;
-  color: #606266;
+  color: var(--color-mahogany);
   margin-bottom: 1.5rem;
 }
 
@@ -2346,7 +2411,7 @@ onMounted(() => {
 .grounding-step {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
 }
 
@@ -2360,7 +2425,7 @@ onMounted(() => {
 .step-number {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary-light-9);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -2373,7 +2438,7 @@ onMounted(() => {
 
 .step-header h5 {
   margin: 0;
-  color: #303133;
+  color: var(--color-ink);
   font-size: 1rem;
 }
 
@@ -2427,7 +2492,7 @@ onMounted(() => {
 }
 
 .emergency-content p {
-  color: #606266;
+  color: var(--color-mahogany);
   margin-bottom: 1.5rem;
   font-size: 1.05rem;
 }
@@ -2440,9 +2505,9 @@ onMounted(() => {
 
 .contact-item {
   padding: 1.5rem;
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s;
 }
 
@@ -2452,7 +2517,7 @@ onMounted(() => {
 }
 
 .contact-item h5 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.5rem;
   font-size: 1.1rem;
 }
@@ -2467,7 +2532,7 @@ onMounted(() => {
 }
 
 .contact-desc {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }
@@ -2485,7 +2550,7 @@ onMounted(() => {
 
 .resource-link {
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   transition: all 0.3s;
 }
@@ -2504,11 +2569,11 @@ onMounted(() => {
 
 .resource-header h5 {
   margin: 0;
-  color: #303133;
+  color: var(--color-ink);
 }
 
 .resource-link p {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }
@@ -2524,7 +2589,7 @@ onMounted(() => {
 
 .course-card {
   padding: 1.5rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 12px;
   height: 100%;
   transition: all 0.3s;
@@ -2537,14 +2602,14 @@ onMounted(() => {
 }
 
 .course-card h5 {
-  color: #303133;
+  color: var(--color-ink);
   margin: 0.5rem 0;
   font-size: 1rem;
 }
 
 .course-platform,
 .course-instructor {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 0.85rem;
   margin: 0.25rem 0;
 }
@@ -2561,28 +2626,28 @@ onMounted(() => {
 .education-intro {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, var(--color-accent)15 0%, var(--color-accent)15 100%);
   border-radius: 12px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid var(--color-accent);
 }
 
 .education-intro h4 {
-  color: #303133;
+  color: var(--color-ink);
   font-size: 1.3rem;
   margin-bottom: 0.75rem;
 }
 
 .intro-text {
-  color: #606266;
+  color: var(--color-mahogany);
   line-height: 1.8;
   font-size: 1rem;
 }
 
 .section-content {
-  color: #606266;
+  color: var(--color-mahogany);
   line-height: 1.8;
   padding: 1rem;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   border-radius: 8px;
   margin: 0.5rem 0;
 }
@@ -2595,8 +2660,12 @@ onMounted(() => {
   border-left: 4px solid #e6a23c;
 }
 
+.dark .knowledge-tips {
+  background: rgba(230, 162, 60, 0.12);
+}
+
 .knowledge-tips h5 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 1rem;
   font-size: 1.1rem;
 }
@@ -2607,7 +2676,7 @@ onMounted(() => {
 }
 
 .knowledge-tips li {
-  color: #606266;
+  color: var(--color-mahogany);
   line-height: 1.8;
   padding: 0.5rem 0;
   padding-left: 1.5rem;
@@ -2631,7 +2700,7 @@ onMounted(() => {
 }
 
 .recommended-books h5 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 1rem;
   font-size: 1.1rem;
 }
@@ -2647,7 +2716,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: white;
+  background: var(--color-surface);
   border-radius: 8px;
   transition: all 0.3s;
 }
@@ -2662,19 +2731,19 @@ onMounted(() => {
 }
 
 .book-info h6 {
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 0.25rem;
   font-size: 1rem;
 }
 
 .book-author {
-  color: #909399;
+  color: var(--color-mahogany);
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
 }
 
 .book-desc {
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 0.9rem;
   line-height: 1.6;
   margin: 0;
@@ -2724,18 +2793,18 @@ onMounted(() => {
     .meditation-description {
       font-size: 15px;
       line-height: 1.6;
-      color: #606266;
+      color: var(--color-mahogany);
       margin-bottom: 10px;
     }
     
     .meditation-duration {
       font-size: 14px;
-      color: #909399;
+      color: var(--color-mahogany);
       margin-bottom: 15px;
     }
     
     .meditation-video-container {
-      background: #f5f7fa;
+      background: var(--el-color-primary-light-9);
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 20px;
@@ -2775,7 +2844,7 @@ onMounted(() => {
     }
     
     .meditation-tips li {
-      color: #606266;
+      color: var(--color-mahogany);
       margin-bottom: 5px;
       font-size: 14px;
     }
@@ -2796,11 +2865,11 @@ onMounted(() => {
     
     .dark .meditation-description,
     .dark .meditation-tips li {
-      color: #c0c4cc;
+      color: var(--color-mahogany);
     }
     
     .dark .meditation-duration {
-      color: #909399;
+      color: var(--color-mahogany);
     }
     
     .dark .meditation-tips {
@@ -2845,7 +2914,7 @@ onMounted(() => {
       align-items: center;
       gap: 15px;
       padding: 15px;
-      background: #f5f7fa;
+      background: var(--el-color-primary-light-9);
       border-radius: 10px;
       margin-bottom: 15px;
       transition: all 0.3s;
@@ -2873,13 +2942,13 @@ onMounted(() => {
     
     .trend-label {
       font-size: 13px;
-      color: #909399;
+      color: var(--color-mahogany);
       margin-bottom: 5px;
     }
     
     .trend-value {
       font-size: 24px;
       font-weight: bold;
-      color: #303133;
+      color: var(--color-ink);
     }
   </style>

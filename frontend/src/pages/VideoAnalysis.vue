@@ -2,7 +2,7 @@
   <div class="video-analysis-view">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>🎬 视频情绪分析</h1>
+      <h1>视频情绪分析</h1>
       <p>上传视频，智能识别视频中的人脸情绪变化</p>
     </div>
 
@@ -20,7 +20,7 @@
     <el-card v-if="currentStep === 0" class="upload-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>📤 上传视频文件</span>
+          <span>上传视频文件</span>
         </div>
       </template>
 
@@ -88,7 +88,7 @@
     <el-card v-if="currentStep === 1" class="config-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>⚙️ 分析参数配置</span>
+          <span>分析参数配置</span>
         </div>
       </template>
 
@@ -121,9 +121,9 @@
       <el-form :model="analysisConfig" label-width="140px" class="config-form">
         <el-form-item label="识别模型" class="form-item-spacing">
           <el-radio-group v-model="analysisConfig.model" class="model-radio-group">
-            <el-radio label="cnn" border>CNN (83.77%) ⭐</el-radio>
-            <el-radio label="vgg" border>VGG16 (80%)</el-radio>
-            <el-radio label="se83" border>SE-Net (83%) ⭐</el-radio>
+            <el-radio v-for="opt in modelRadioOptions" :key="opt.value" :label="opt.value" border>
+              {{ opt.label }}{{ opt.recommended ? ' · 推荐' : '' }}
+            </el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -140,8 +140,8 @@
               class="interval-slider"
             />
             <div class="hint-box">
-              <p class="config-hint">⏱️ 每隔 <strong>{{ analysisConfig.interval }}</strong> 秒提取一帧进行分析</p>
-              <p class="config-hint">📊 预计提取约 <strong>{{ estimatedFrames }}</strong> 帧 (最多 {{ analysisConfig.maxFrames }} 帧)</p>
+              <p class="config-hint">每隔 <strong>{{ analysisConfig.interval }}</strong> 秒提取一帧进行分析</p>
+              <p class="config-hint">预计提取约 <strong>{{ estimatedFrames }}</strong> 帧 (最多 {{ analysisConfig.maxFrames }} 帧)</p>
             </div>
           </div>
         </el-form-item>
@@ -156,7 +156,7 @@
               class="max-frames-input"
             />
             <div class="hint-box">
-              <p class="config-hint">⚠️ 限制提取的最大帧数，避免处理时间过长</p>
+              <p class="config-hint">限制提取的最大帧数，避免处理时间过长</p>
             </div>
           </div>
         </el-form-item>
@@ -170,7 +170,7 @@
               size="large"
             />
             <div class="hint-box">
-              <p class="config-hint">🎯 自动检测并裁剪人脸区域，提高识别准确度</p>
+              <p class="config-hint">自动检测并裁剪人脸区域，提高识别准确度</p>
             </div>
           </div>
         </el-form-item>
@@ -197,7 +197,7 @@
     <el-card v-if="currentStep === 2" class="analyzing-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>🔄 正在分析视频...</span>
+          <span>正在分析视频...</span>
         </div>
       </template>
 
@@ -220,13 +220,13 @@
     </el-card>
 
     <!-- 步骤4: 查看结果 -->
-    <div v-if="currentStep === 3 && videoStore.hasResults">
+    <div v-if="currentStep === 3 && videoStore.hasResults" ref="resultsRef">
       <!-- 分析概览 -->
       <el-row :gutter="20" class="stats-cards">
         <el-col :xs="12" :sm="6" :md="6">
           <el-card class="stat-card" shadow="hover">
             <div class="stat-content">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+              <div class="stat-icon" style="background: var(--el-color-primary-light-9)">
                 <el-icon><film /></el-icon>
               </div>
               <div class="stat-info">
@@ -240,7 +240,7 @@
         <el-col :xs="12" :sm="6" :md="6">
           <el-card class="stat-card" shadow="hover">
             <div class="stat-content">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+              <div class="stat-icon" style="background: var(--el-color-primary-light-9)">
                 <el-icon><avatar /></el-icon>
               </div>
               <div class="stat-info">
@@ -254,12 +254,12 @@
         <el-col :xs="12" :sm="6" :md="6">
           <el-card class="stat-card" shadow="hover">
             <div class="stat-content">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+              <div class="stat-icon" style="background: var(--el-color-primary-light-9)">
                 <el-icon><trend-charts /></el-icon>
               </div>
               <div class="stat-info">
                 <div class="stat-value">
-                  {{ (videoStore.statistics?.average_confidence * 100).toFixed(1) }}%
+                  {{ ((videoStore.statistics?.average_confidence ?? 0) * 100).toFixed(1) }}%
                 </div>
                 <div class="stat-label">平均置信度</div>
               </div>
@@ -274,7 +274,7 @@
                 <el-icon><connection /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ videoStore.emotionTimeline?.total_transitions || 0 }}</div>
+                <div class="stat-value">{{ videoStore.emotionTransitions?.length || 0 }}</div>
                 <div class="stat-label">情绪转换次数</div>
               </div>
             </div>
@@ -286,7 +286,7 @@
       <el-card class="timeline-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span>📈 情绪变化时间轴</span>
+            <span>情绪变化时间轴</span>
           </div>
         </template>
 
@@ -322,7 +322,7 @@
       <el-card class="frames-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span>🖼️ 帧浏览器 ({{ currentFrameIndex + 1 }} / {{ videoStore.totalFrames }})</span>
+            <span>帧浏览器 ({{ currentFrameIndex + 1 }} / {{ videoStore.totalFrames }})</span>
             <div>
               <el-button-group>
                 <el-button
@@ -421,7 +421,7 @@
       <el-card class="distribution-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span>📊 情绪分布统计</span>
+            <span>情绪分布统计</span>
           </div>
         </template>
 
@@ -457,7 +457,7 @@
           <el-icon><refresh /></el-icon>
           重新分析
         </el-button>
-        <el-button type="primary" size="large" @click="downloadReport">
+        <el-button type="primary" size="large" :loading="isExporting" @click="downloadReport">
           <el-icon><download /></el-icon>
           导出报告
         </el-button>
@@ -467,7 +467,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import {
   UploadFilled,
@@ -509,6 +509,36 @@ const analysisConfig = ref({
   detectFace: true
 })
 
+// 模型单选项：准确率从后端实时获取
+const modelRadioOptions = ref([
+  { value: 'cnn', label: 'CNN (83.77%)', recommended: true },
+  { value: 'vgg', label: 'VGG16 (80%)', recommended: false },
+  { value: 'se83', label: 'SE-Net (83%)', recommended: true }
+])
+
+async function loadModelOptions() {
+  try {
+    const response = await api.get('/models')
+    const models = response.data.models || []
+    if (models.length) {
+      modelRadioOptions.value = models
+        .filter((m) => ['cnn', 'vgg', 'se83'].includes(m.name))
+        .map((m) => {
+          const acc = typeof m.accuracy === 'number' && m.accuracy <= 1
+            ? (m.accuracy * 100).toFixed(2)
+            : m.accuracy
+          return {
+            value: m.name,
+            label: `${m.display_name || m.name.toUpperCase()} (${acc}%)`,
+            recommended: m.name === 'cnn' || m.name === 'se83'
+          }
+        })
+    }
+  } catch (error) {
+    // 后端不可用时保留静态兜底
+  }
+}
+
 // 计算属性
 const estimatedFrames = computed(() => {
   if (!videoStore.currentVideo) return 0
@@ -518,13 +548,8 @@ const estimatedFrames = computed(() => {
 })
 
 const analysisStatusText = computed(() => {
-  if (videoStore.analysisProgress < 30) {
-    return '正在提取视频帧...'
-  } else if (videoStore.analysisProgress < 90) {
-    return '正在进行情绪识别...'
-  } else {
-    return '正在生成分析报告...'
-  }
+  const frames = estimatedFrames.value || analysisConfig.value.maxFrames
+  return `服务器正在逐帧分析（约 ${frames} 帧）· 已耗时 ${analysisElapsed.value} 秒，请耐心等待`
 })
 
 const currentFrame = computed(() => {
@@ -537,15 +562,31 @@ function triggerUpload() {
   uploadRef.value.$el.querySelector('input').click()
 }
 
+// 与后端 ALLOWED_VIDEO_EXTENSIONS / MAX_VIDEO_BYTES 一致
+const ALLOWED_VIDEO_EXTS = ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv']
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024
+
 function handleVideoSelect(file) {
-  selectedFile.value = file.raw
-  
+  const raw = file.raw
+  const ext = raw.name.split('.').pop().toLowerCase()
+  if (!ALLOWED_VIDEO_EXTS.includes(ext)) {
+    ElMessage.error('不支持的视频格式，支持：' + ALLOWED_VIDEO_EXTS.join(' / '))
+    clearSelection()
+    return
+  }
+  if (raw.size > MAX_VIDEO_BYTES) {
+    ElMessage.error('视频过大（最大 200MB）')
+    clearSelection()
+    return
+  }
+  selectedFile.value = raw
+
   // 创建本地预览URL
   if (videoPreviewUrl.value) {
     URL.revokeObjectURL(videoPreviewUrl.value)
   }
-  videoPreviewUrl.value = URL.createObjectURL(file.raw)
-  
+  videoPreviewUrl.value = URL.createObjectURL(raw)
+
   ElMessage.success('视频选择成功')
 }
 
@@ -565,26 +606,24 @@ async function uploadVideo() {
 
   try {
     videoStore.startUpload()
-    
+
     const formData = new FormData()
     formData.append('video', selectedFile.value)
 
-    // 模拟上传进度
-    const progressInterval = setInterval(() => {
-      if (videoStore.uploadProgress < 90) {
-        videoStore.setUploadProgress(videoStore.uploadProgress + 10)
-      }
-    }, 200)
-
-    // 🔑 使用 api 而不是 axios，会自动附加 Authorization header（如果已登录）
+    // 真实上传进度（axios onUploadProgress）
     const response = await api.post('/video/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 300000  // 5分钟超时，适用于大视频文件上传
+      timeout: 300000,  // 5分钟超时，适用于大视频文件上传
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100)
+          videoStore.setUploadProgress(Math.min(percent, 100))
+        }
+      }
     })
 
-    clearInterval(progressInterval)
     videoStore.finishUpload()
 
     if (response.data.success) {
@@ -603,6 +642,19 @@ async function uploadVideo() {
   }
 }
 
+// 分析耗时计时器（用于展示诚实的进度信息）
+let analysisTimer = null
+let analysisStartTime = 0
+const analysisElapsed = ref(0)
+
+// 离开页面时必须清理定时器，否则分析进行中跳路由后定时器会永久运行
+onUnmounted(() => {
+  if (analysisTimer) {
+    clearInterval(analysisTimer)
+    analysisTimer = null
+  }
+})
+
 async function startAnalysis() {
   if (!videoStore.currentVideo) {
     ElMessage.warning('请先上传视频')
@@ -613,11 +665,15 @@ async function startAnalysis() {
     currentStep.value = 2
     videoStore.startAnalysis()
 
-    // 模拟分析进度
-    const progressInterval = setInterval(() => {
-      if (videoStore.analysisProgress < 85) {
-        videoStore.setAnalysisProgress(videoStore.analysisProgress + 5)
-      }
+    // 后端暂无进度接口：进度条按耗时渐进逼近 90%（完成时立即到 100%），
+    // 同时展示已耗时与预计帧数，如实反映分析状态
+    analysisStartTime = Date.now()
+    analysisElapsed.value = 0
+    clearInterval(analysisTimer)
+    analysisTimer = setInterval(() => {
+      analysisElapsed.value = Math.floor((Date.now() - analysisStartTime) / 1000)
+      const asymptotic = 90 * (1 - Math.exp(-analysisElapsed.value / 45))
+      videoStore.setAnalysisProgress(Math.min(90, Math.round(asymptotic)))
     }, 500)
 
     // 🔑 使用 api 而不是 axios，会自动附加 Authorization header
@@ -632,34 +688,30 @@ async function startAnalysis() {
       timeout: 600000  // 10分钟超时（600秒）
     })
 
-    clearInterval(progressInterval)
+    clearInterval(analysisTimer)
+    videoStore.setAnalysisProgress(100)
     videoStore.finishAnalysis()
 
-    console.log('🔍 [VideoAnalysis] 收到后端响应:', response.data)
-    console.log('🔍 [VideoAnalysis] success 字段类型:', typeof response.data.success, '值:', response.data.success)
-
     if (response.data && response.data.success === true) {
-      console.log('✅ [VideoAnalysis] 开始设置分析结果')
       videoStore.setAnalysisResults(response.data)
       currentStep.value = 3
       currentFrameIndex.value = 0
-      
+
       ElNotification({
         title: '分析完成',
-        message: `成功分析 ${response.data.total_frames} 帧图像`,
+        message: `成功分析 ${response.data.total_frames} 帧图像，耗时 ${analysisElapsed.value} 秒`,
         type: 'success',
         duration: 3000
       })
     } else {
-      console.error('❌ [VideoAnalysis] 后端返回数据格式错误:', response.data)
       ElMessage.error('视频分析响应格式错误')
       currentStep.value = 1
     }
   } catch (error) {
+    clearInterval(analysisTimer)
     videoStore.finishAnalysis()
     currentStep.value = 1
-    console.error('❌ [VideoAnalysis] 视频分析异常:', error)
-    console.error('❌ [VideoAnalysis] 错误详情:', error.response?.data)
+    console.error('视频分析异常:', error)
     ElMessage.error(error.response?.data?.error || '视频分析失败')
   }
 }
@@ -687,9 +739,52 @@ function resetAnalysis() {
   clearSelection()
 }
 
-function downloadReport() {
-  ElMessage.info('报告导出功能开发中...')
-  // TODO: 实现报告导出功能
+// 报告导出：截图结果区域并生成 PDF（与数据分析页同一方案）
+const resultsRef = ref(null)
+const isExporting = ref(false)
+
+async function downloadReport() {
+  if (!resultsRef.value || isExporting.value) return
+  isExporting.value = true
+  try {
+    ElMessage.info('正在生成 PDF 报告，请稍候...')
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ])
+
+    const canvas = await html2canvas(resultsRef.value, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    })
+
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgWidth = pageWidth - 20
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let heightLeft = imgHeight
+    let position = 10
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight - 20
+
+    while (heightLeft > 0) {
+      pdf.addPage()
+      position = 10 - (imgHeight - heightLeft)
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 10, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight - 20
+    }
+
+    pdf.save(`video_emotion_report_${new Date().toISOString().split('T')[0]}.pdf`)
+    ElMessage.success('报告导出成功！')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败：' + error.message)
+  } finally {
+    isExporting.value = false
+  }
 }
 
 function formatFileSize(bytes) {
@@ -730,7 +825,7 @@ function getEmotionColor(emotion) {
   const colorMap = {
     '生气': '#f56c6c',
     '厌恶': '#e6a23c',
-    '害怕': '#909399',
+    '害怕': 'var(--color-mahogany)',
     '高兴': '#67c23a',
     '平静': '#409eff',
     '悲伤': '#5470c6',
@@ -741,12 +836,12 @@ function getEmotionColor(emotion) {
 
 // 组件挂载时恢复数据
 onMounted(() => {
+  loadModelOptions()
   // 如果有保存的分析结果，自动跳转到结果页
   if (videoStore.hasResults) {
     currentStep.value = 3
     currentFrameIndex.value = 0
-    console.log('✅ 已恢复上次的视频分析结果')
-    
+
     ElNotification({
       title: '数据已恢复',
       message: '已自动恢复上次的视频分析结果',
@@ -768,7 +863,7 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary-light-9);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
@@ -814,7 +909,7 @@ onMounted(() => {
 }
 
 .upload-icon {
-  color: #409eff;
+  color: var(--el-color-primary);
   margin-bottom: 20px;
 }
 
@@ -822,11 +917,11 @@ onMounted(() => {
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 10px;
-  color: #303133;
+  color: var(--color-ink);
 }
 
 .upload-hint {
-  color: #909399;
+  color: var(--color-mahogany);
   margin: 5px 0;
 }
 
@@ -904,8 +999,8 @@ onMounted(() => {
 }
 
 .hint-box {
-  background: #f4f4f5;
-  border-left: 4px solid #409eff;
+  background: var(--el-fill-color-light);
+  border-left: 4px solid var(--el-color-primary);
   padding: 12px 16px;
   border-radius: 4px;
   margin-top: 12px;
@@ -913,13 +1008,13 @@ onMounted(() => {
 
 .config-hint {
   margin: 8px 0;
-  color: #606266;
+  color: var(--color-mahogany);
   font-size: 14px;
   line-height: 1.6;
 }
 
 .config-hint strong {
-  color: #409eff;
+  color: var(--el-color-primary);
   font-weight: 600;
 }
 
@@ -933,7 +1028,7 @@ onMounted(() => {
 }
 
 .analyzing-icon {
-  color: #409eff;
+  color: var(--el-color-primary);
   margin-bottom: 20px;
   animation: rotate 2s linear infinite;
 }
@@ -969,7 +1064,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-ink);
   font-size: 28px;
 }
 
@@ -980,13 +1075,13 @@ onMounted(() => {
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: #303133;
+  color: var(--color-ink);
   margin-bottom: 5px;
 }
 
 .stat-label {
   font-size: 0.9rem;
-  color: #909399;
+  color: var(--color-mahogany);
 }
 
 .timeline-card,
@@ -997,7 +1092,7 @@ onMounted(() => {
 
 .emotion-flow {
   padding: 20px;
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 15%, transparent) 0%, color-mix(in srgb, var(--color-accent) 15%, transparent) 100%);
   border-radius: 8px;
   margin-bottom: 20px;
 }
@@ -1005,7 +1100,7 @@ onMounted(() => {
 .flow-text {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-ink);
   margin-top: 10px;
 }
 
@@ -1037,7 +1132,7 @@ onMounted(() => {
 
 .image-container h4 {
   margin-bottom: 10px;
-  color: #606266;
+  color: var(--color-mahogany);
   width: 100%;
   text-align: left;
 }
@@ -1049,7 +1144,7 @@ onMounted(() => {
   object-fit: contain; /* 保持比例，完整显示 */
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  background-color: #f5f7fa; /* 添加背景色以便看清边界 */
+  background-color: var(--el-color-primary-light-9); /* 添加背景色以便看清边界 */
 }
 
 .frame-analysis {
@@ -1061,7 +1156,7 @@ onMounted(() => {
   align-items: center;
   gap: 20px;
   padding: 20px;
-  background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%);
+  background: var(--el-color-primary-light-9);
   border-radius: 12px;
 }
 
@@ -1081,7 +1176,7 @@ onMounted(() => {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
-  color: #606266;
+  color: var(--color-mahogany);
 }
 
 .frame-slider {
@@ -1092,7 +1187,7 @@ onMounted(() => {
   text-align: center;
   padding: 20px;
   border-radius: 8px;
-  background: #f5f7fa;
+  background: var(--el-color-primary-light-9);
   margin-bottom: 15px;
 }
 
@@ -1112,7 +1207,7 @@ onMounted(() => {
 
 .stat-count {
   margin-top: 10px;
-  color: #909399;
+  color: var(--color-mahogany);
 }
 
 .final-actions {

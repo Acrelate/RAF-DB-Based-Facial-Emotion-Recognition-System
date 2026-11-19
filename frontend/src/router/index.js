@@ -1,9 +1,18 @@
 ﻿import { createRouter, createWebHashHistory } from 'vue-router'
 import Layout from '../components/Layout.vue'
+import Landing from '../pages/Landing.vue'
 import { useUserStore } from '../stores/user'
 import { ElMessage } from 'element-plus'
 
 const routes = [
+  {
+    path: '/',
+    name: 'Landing',
+    component: Landing,
+    meta: {
+      title: '首页'
+    }
+  },
   {
     path: '/login',
     name: 'Login',
@@ -20,10 +29,10 @@ const routes = [
     meta: { requiresAuth: true }, // 需要登录才能访问
     children: [
       {
-        path: '',
+        path: 'home',
         name: 'Home',
         component: () => import('../pages/Home.vue'),
-        meta: { title: '首页' }
+        meta: { title: '工作台' }
       },
       {
         path: 'image-analysis',
@@ -102,7 +111,7 @@ router.beforeEach(async (to, from, next) => {
   
   // 设置页面标题
   if (to.meta.title) {
-    document.title = `${to.meta.title} - 情绪识别系统`
+    document.title = `${to.meta.title} · FaceLens`
   }
   
   // 检查是否需要认证
@@ -115,32 +124,34 @@ router.beforeEach(async (to, from, next) => {
       })
       return
     }
-    
-    // 已登录，验证token有效性
-    try {
-      await userStore.fetchUserInfo()
-    } catch (error) {
-      // token无效，清除用户信息并跳转到登录页
-      userStore.clearUser()
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      })
-      return
+
+    // 已登录：仅在会话内首次导航时校验 token（fetchUserInfo 内部含 401 刷新兜底）。
+    // 注意 fetchUserInfo 失败时返回 false 而不是抛异常，必须检查返回值。
+    if (!userStore.user?.username) {
+      const ok = await userStore.fetchUserInfo()
+      if (!ok) {
+        // token无效，清除用户信息并跳转到登录页
+        userStore.clearUser()
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath }
+        })
+        return
+      }
     }
   }
   
   // 检查管理员权限
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
     ElMessage.error('权限不足，只有管理员可以访问此页面')
-    next('/')
+    next('/home')
     return
   }
   
   // 检查是否已登录用户访问登录页面
   if (to.meta.hideForAuth && userStore.isLoggedIn) {
-    // 已登录用户访问登录页，重定向到首页
-    next('/')
+    // 已登录用户访问登录页，重定向到工作台
+    next('/home')
     return
   }
   

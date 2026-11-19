@@ -1,17 +1,35 @@
 """
-数据库模块 (可选)
-如果需要保存识别历史,可以使用此模块
+数据库模块 — SQLite 默认在首次启动时自动建表并写入演示账号
 """
 
-from flask_sqlalchemy import SQLAlchemy
+import logging
 from datetime import datetime
 
+from flask_sqlalchemy import SQLAlchemy
+
+logger = logging.getLogger(__name__)
+
 db = SQLAlchemy()
+
+# 与 db.create_all() 对应的业务表（不含 sqlite 系统表）
+EXPECTED_TABLES = (
+    'prediction_history',
+    'user_sessions',
+    'users',
+    'user_emotion_summary',
+    'health_assessment',
+    'video_analysis_result',
+    'emotion_journal',
+    'gratitude_record',
+)
 
 class PredictionHistory(db.Model):
     """预测历史表 - 轻量级，只存储元数据和文件路径"""
     __tablename__ = 'prediction_history'
-    
+    # 历史查询几乎都按 用户+时间 过滤排序（/api/histories、统计、健康汇总）
+    __table_args__ = (
+        db.Index('ix_prediction_history_user_created', 'username', 'created_at'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     emotion = db.Column(db.String(50), nullable=False)
     emotion_cn = db.Column(db.String(50), nullable=False)
@@ -92,7 +110,11 @@ class User(db.Model):
 class UserEmotionSummary(db.Model):
     """用户情绪统计汇总表（数据分析+心理健康共用）"""
     __tablename__ = 'user_emotion_summary'
-    
+    # 一个用户一天只有一条汇总（upsert 口径），数据库层兜底防并发双插
+    __table_args__ = (
+        db.Index('uq_user_emotion_summary_user_date', 'username', 'summary_date', unique=True),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     summary_date = db.Column(db.Date, nullable=False)
@@ -149,7 +171,11 @@ class UserEmotionSummary(db.Model):
 class HealthAssessment(db.Model):
     """心理健康评估表（心理健康界面专用）"""
     __tablename__ = 'health_assessment'
-    
+    # 一个用户一天只有一条评估（upsert 口径），数据库层兜底防并发双插
+    __table_args__ = (
+        db.Index('uq_health_assessment_user_date', 'username', 'assessment_date', unique=True),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     assessment_date = db.Column(db.Date, nullable=False)
@@ -302,22 +328,199 @@ class GratitudeRecord(db.Model):
             'created_at': self.created_at.isoformat()
         }
 
+def _configure_sqlite_pragmas(engine):
+    """SQLite 并发三件套：WAL（读写不互斥）+ busy_timeout（写锁等待而非立刻报错）。"""
+    if engine.dialect.name != 'sqlite':
+        return
+
+    from sqlalchemy import event
+
+    @event.listens_for(engine, 'connect')
+    def _set_sqlite_pragma(dbapi_conn, _record):
+        cursor = dbapi_conn.cursor()
+        try:
+            cursor.execute('PRAGMA journal_mode=WAL')
+            cursor.execute('PRAGMA busy_timeout=30000')
+            cursor.execute('PRAGMA synchronous=NORMAL')
+        finally:
+            cursor.close()
+
+
+def _ensure_sqlite_indexes():
+    """为旧库幂等补建索引与唯一约束（旧库建表时没有这些约束，须先去重再建）。"""
+    engine = db.engine
+    if engine.dialect.name != 'sqlite':
+        return
+    with engine.begin() as conn:
+        conn.execute(db.text(
+            "CREATE INDEX IF NOT EXISTS ix_prediction_history_user_created "
+            "ON prediction_history (username, created_at)"
+        ))
+        # 唯一索引建不起来多半是历史脏数据：同 用户+日期 保留最小 id
+        conn.execute(db.text(
+            "DELETE FROM user_emotion_summary WHERE id NOT IN ("
+            "  SELECT MIN(id) FROM user_emotion_summary GROUP BY username, summary_date)"
+        ))
+        conn.execute(db.text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_user_emotion_summary_user_date "
+            "ON user_emotion_summary (username, summary_date)"
+        ))
+        conn.execute(db.text(
+            "DELETE FROM health_assessment WHERE id NOT IN ("
+            "  SELECT MIN(id) FROM health_assessment GROUP BY username, assessment_date)"
+        ))
+        conn.execute(db.text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_health_assessment_user_date "
+            "ON health_assessment (username, assessment_date)"
+        ))
+
+
 def init_db(app):
-    """初始化数据库"""
+    """初始化数据库：建表、轻量 schema 升级、写入演示账号（若不存在）。"""
     db.init_app(app)
     with app.app_context():
+        _configure_sqlite_pragmas(db.engine)
         db.create_all()
-        # 轻量升级：如果 prediction_history 缺少 username 列，动态添加
         try:
-            _upgrade_prediction_history_add_username_if_needed()
+            _upgrade_sqlite_schema()
         except Exception as e:
-            print('检查/升级 prediction_history.username 失败:', e)
-        print("数据库表创建/检查完成!")
+            logger.warning('SQLite schema 升级检查失败: %s', e)
+        try:
+            _ensure_sqlite_indexes()
+        except Exception as e:
+            logger.warning('SQLite 索引补建失败: %s', e)
+        try:
+            _seed_default_users()
+        except Exception as e:
+            logger.warning('写入演示账号失败: %s', e)
+
+        tables = _list_sqlite_tables()
+        missing = [t for t in EXPECTED_TABLES if t not in tables]
+        if missing:
+            logger.warning('数据库缺少表: %s', missing)
+        else:
+            logger.info('数据库就绪 (%d 张表): %s', len(tables), ', '.join(tables))
+
+
+def _list_sqlite_tables():
+    engine = db.engine
+    if engine.dialect.name != 'sqlite':
+        return []
+    with engine.connect() as conn:
+        rows = conn.execute(db.text(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+        ))
+        return [row[0] for row in rows]
+
+
+def _upgrade_sqlite_schema():
+    """对旧版 SQLite 库补列；全新克隆走 create_all 时通常无操作。"""
+    _upgrade_prediction_history_add_username_if_needed()
+    _upgrade_table_columns('user_emotion_summary', {
+        'emotion_counts': 'TEXT',
+        'dominant_emotion_count': 'INTEGER DEFAULT 0',
+    })
+    _upgrade_table_columns('health_assessment', {
+        'health_score': 'INTEGER',
+        'risk_level': 'VARCHAR(20)',
+        'risk_level_cn': 'VARCHAR(20)',
+        'emotion_stability': 'FLOAT',
+        'based_on_days': 'INTEGER DEFAULT 1',
+    })
+    try:
+        _normalize_legacy_rate_rows()
+    except Exception as e:
+        logger.warning('历史占比数据归一化失败: %s', e)
+
+
+def _normalize_legacy_rate_rows():
+    """
+    旧版本 update_health_tables 把 positive_rate/negative_rate 存成 0-1 小数，
+    新版统一为 0-100 百分数。启动时把能被计数验证为小数的历史行 ×100 归一，
+    并清理每日重复的健康评估行（旧行为每次预测都插入一条）。
+    """
+    summaries = UserEmotionSummary.query.filter(UserEmotionSummary.total_predictions > 0).all()
+    fixed = 0
+    for s in summaries:
+        if s.positive_rate is None or s.negative_rate is None:
+            continue
+        total = s.total_predictions
+        # 仅当数值与"小数语义"完全吻合时才迁移，避免误改真实的百分数
+        pos_frac = round((s.positive_count or 0) / total, 2)
+        neg_frac = round((s.negative_count or 0) / total, 2)
+        if (0 <= s.positive_rate <= 1 and abs(s.positive_rate - pos_frac) < 0.005
+                and 0 <= s.negative_rate <= 1 and abs(s.negative_rate - neg_frac) < 0.005):
+            s.positive_rate = round(s.positive_rate * 100, 2)
+            s.negative_rate = round(s.negative_rate * 100, 2)
+            fixed += 1
+    if fixed:
+        db.session.commit()
+        logger.info('已将 %d 行历史情绪占比从 0-1 小数归一为百分数', fixed)
+
+    # 健康评估按 (username, assessment_date) 去重，保留 id 最小的一条
+    assessments = HealthAssessment.query.order_by(HealthAssessment.id).all()
+    seen = set()
+    removed = 0
+    for a in assessments:
+        key = (a.username, a.assessment_date)
+        if key in seen:
+            db.session.delete(a)
+            removed += 1
+        else:
+            seen.add(key)
+    if removed:
+        db.session.commit()
+        logger.info('已清理 %d 条重复的每日健康评估记录', removed)
+
+
+def _upgrade_table_columns(table_name, new_columns):
+    engine = db.engine
+    if engine.dialect.name != 'sqlite':
+        return
+
+    with engine.begin() as conn:
+        rows = conn.execute(db.text(f"PRAGMA table_info('{table_name}')"))
+        cols = rows.fetchall()
+        if not cols:
+            return
+        existing = {c[1] for c in cols}
+        for col_name, col_type in new_columns.items():
+            if col_name in existing:
+                continue
+            conn.execute(db.text(
+                f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"
+            ))
+            logger.info('已为 %s 增加列 %s', table_name, col_name)
+
+
+def _seed_default_users():
+    """将 auth 模块中的演示账号同步到 users 表（仅当不存在时）。"""
+    from src.auth.auth import USERS_DB
+
+    added = 0
+    for u in USERS_DB.values():
+        exists = User.query.filter_by(username=u['username']).first()
+        if exists:
+            continue
+        db.session.add(User(
+            id=u.get('id'),
+            username=u['username'],
+            email=u.get('email') or f"{u['username']}@local",
+            password_hash=u.get('password_hash', ''),
+            role=u.get('role', 'user'),
+            avatar=u.get('avatar', ''),
+            is_active=u.get('is_active', True),
+            is_verified=u.get('is_verified', False),
+        ))
+        added += 1
+    if added:
+        db.session.commit()
+        logger.info('已写入 %d 个演示账号 (admin / test)', added)
 
 
 def _upgrade_prediction_history_add_username_if_needed():
     """如果是 SQLite，检查并添加新列（最小改动）。"""
-    engine = db.get_engine()
+    engine = db.engine
     if engine.dialect.name != 'sqlite':
         return
     
@@ -344,9 +547,9 @@ def _upgrade_prediction_history_add_username_if_needed():
             if col_name not in existing:
                 try:
                     conn.execute(db.text(f"ALTER TABLE prediction_history ADD COLUMN {col_name} {col_type}"))
-                    print(f"✅ 已为 prediction_history 增加列 {col_name}")
+                    logger.info('已为 prediction_history 增加列 %s', col_name)
                 except Exception as e:
-                    print(f"❌ 添加列 {col_name} 失败: {e}")
+                    logger.warning('添加列 %s 失败: %s', col_name, e)
 
 # 如果要在app.py中使用数据库,添加以下代码:
 """

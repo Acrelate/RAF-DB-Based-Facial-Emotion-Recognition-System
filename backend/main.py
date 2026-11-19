@@ -10,13 +10,10 @@ BACKEND_DIR = Path(__file__).resolve().parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from src.api.app import app, warmup_models
-from src.config.settings import HOST, PORT
+from src.config.settings import HOST, PORT, DEBUG  # noqa: E402
+# 导入 app 即完成日志（控制台+文件）与数据库初始化
+from src.api.app import app, warmup_models  # noqa: E402
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +21,8 @@ def main():
     logger.info("🚀 正在启动人脸情绪识别服务...")
     warmup_models()
     logger.info(f"🌐 服务启动在 http://{HOST}:{PORT}")
-    # 生产环境请关闭 debug 并使用 WSGI 容器部署
-    app.run(host=HOST, port=PORT, debug=False)
+    # 生产环境请关闭 debug 并使用 WSGI 容器部署（见 docker-entrypoint.sh + gunicorn.conf.py）
+    app.run(host=HOST, port=PORT, debug=DEBUG)
 
 
 if __name__ == '__main__':
