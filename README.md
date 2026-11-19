@@ -272,9 +272,9 @@ GitHub Actions（`.github/workflows/`）提供：
 
 | 工作流 | 触发 | 内容 |
 |--------|------|------|
-| `CI` | push / PR 到 main | 后端 ruff + pytest（Python 3.8 / 3.10 矩阵）、前端构建（Node 18 / 20）、Docker 镜像构建验证 |
+| `CI` | push / PR 到 main | 后端 Ruff + Pytest（Python 3.8）、前端构建检查（Node 20） |
 | `Docker Publish` | push main / 打 `v*` 标签 | 前后端镜像发布到 GitHub Container Registry（`ghcr.io`） |
-| Dependabot | 每周 | pip / npm / docker / actions 依赖更新检查 |
+| Dependabot | 每周 | pip / npm / Docker / GitHub Actions 依赖更新检查 |
 
 ## 🤝 贡献
 
